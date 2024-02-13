@@ -1,4 +1,4 @@
-namespace FileService;
+namespace Backend;
 
 public class Program
 {
