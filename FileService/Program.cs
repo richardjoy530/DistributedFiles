@@ -1,10 +1,15 @@
+using System.Net.WebSockets;
+using Backend.Storage;
+
 namespace Backend;
 
-public class Program
+public abstract class Program
 {
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        Container.Files = new Queue<IFormFile>();
+        Container.ConnectedSockets = new List<WebSocket>();
 
         // Add services to the container.
 
@@ -21,11 +26,12 @@ public class Program
             app.UseSwagger();
             app.UseSwaggerUI();
         }
+        
+        var webSocketOptions = new WebSocketOptions();
+
+        app.UseWebSockets(webSocketOptions);
 
         app.UseHttpsRedirection();
-
-        app.UseAuthorization();
-
 
         app.MapControllers();
 

@@ -1,3 +1,5 @@
+using System.Net.WebSockets;
+using System.Text;
 using Backend.Storage;
 using Microsoft.AspNetCore.Mvc;
 
@@ -5,19 +7,12 @@ namespace Backend.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class FileController : ControllerBase
+public class FileController(ILogger<FileController> logger) : ControllerBase
 {
-    private readonly ILogger<FileController> _logger;
-
-    public FileController(ILogger<FileController> logger)
-    {
-        _logger = logger;
-    }
-
-    [HttpPost()]
+    [HttpPost]
     public bool Upload(IFormFile file)
     {
-        TempFileQueue.Files.Enqueue(file);
+        Storage.Container.Files.Enqueue(file);
         return true;
     }
 }
