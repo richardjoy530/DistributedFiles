@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Logging;
 using System.Net.WebSockets;
+using System.Text;
 
 namespace FileDistributor;
 
@@ -9,17 +11,29 @@ public class Checkin
         var ws = new ClientWebSocket();
         var ct = new CancellationToken(false);
         await ws.ConnectAsync(new Uri("wss://localhost:7180/ws"), ct);
-        int i = 0;
-        while (!ws.CloseStatus.HasValue)
+
+
+        var buffer = new byte[1024 * 4];
+        var receiveResult = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+
+        while (!receiveResult.CloseStatus.HasValue)
         {
-            if (i++ == 5)
+            receiveResult = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+            var msg = Encoding.UTF8.GetString(buffer);
+            await Console.Out.WriteLineAsync($"Recived message: {msg}");
+            if (msg == "checkin")
             {
-                break;
+                await Console.Out.WriteLineAsync("Check-In");
             }
-            await ws.SendAsync(new ArraySegment<byte>("this is a test from client"u8.ToArray()), WebSocketMessageType.Text, WebSocketMessageFlags.None, ct);
         }
 
-        await ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Closing", ct);
+        await Console.Out.WriteLineAsync("Closing connection ... ");
+
+        await ws.CloseAsync(
+            receiveResult.CloseStatus.Value,
+            receiveResult.CloseStatusDescription,
+            CancellationToken.None);
+
         ws.Dispose();
     }
 }

@@ -8,8 +8,6 @@ public abstract class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        Container.Files = new Queue<IFormFile>();
-        Container.ConnectedSockets = new List<WebSocket>();
 
         // Add services to the container.
 
@@ -17,6 +15,9 @@ public abstract class Program
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
+
+        builder.Services.AddSingleton<IFileQueueContainer, FileQueueContainer>();
+        builder.Services.AddSingleton<IWebSocketContainer, WebSocketContainer>();
 
         var app = builder.Build();
 
@@ -26,8 +27,11 @@ public abstract class Program
             app.UseSwagger();
             app.UseSwaggerUI();
         }
-        
-        var webSocketOptions = new WebSocketOptions();
+
+        var webSocketOptions = new WebSocketOptions()
+        {
+            KeepAliveInterval = TimeSpan.FromMinutes(5)
+        };
 
         app.UseWebSockets(webSocketOptions);
 

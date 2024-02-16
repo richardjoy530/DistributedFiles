@@ -1,18 +1,40 @@
-using System.Net.WebSockets;
-using System.Text;
 using Backend.Storage;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace Backend.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class FileController(ILogger<FileController> logger) : ControllerBase
+public class FileController : ControllerBase
 {
-    [HttpPost]
-    public bool Upload(IFormFile file)
+    private readonly ILogger<FileController> _logger;
+    private readonly IWebSocketContainer _webSocketContainer;
+    private readonly IFileQueueContainer _fileQueueContainer;
+
+    public FileController(ILogger<FileController> logger, IWebSocketContainer webSocketContainer, IFileQueueContainer fileQueueContainer)
     {
-        Storage.Container.Files.Enqueue(file);
-        return true;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _webSocketContainer = webSocketContainer ?? throw new ArgumentNullException(nameof(webSocketContainer));
+        _fileQueueContainer = fileQueueContainer ?? throw new ArgumentNullException(nameof(fileQueueContainer));
+    }
+
+    [HttpPost]
+    public async Task UploadAsync(IFormFile file)
+    {
+        _logger.LogInformation($"Recived file {file.FileName}");
+        _fileQueueContainer.EnQueue(file);
+        await _webSocketContainer.RequestCheckinAsync();
+    }
+
+    [HttpGet]
+    public IFormFile? DownloadFile()
+    {
+        var file = _fileQueueContainer.DeQueue();
+        if (file == null)
+        {
+            Response.StatusCode = (int)HttpStatusCode.NoContent;
+        }
+        return file;
     }
 }

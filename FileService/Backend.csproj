@@ -5,6 +5,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <StartupObject>Backend.Program</StartupObject>
+        <BaseOutputPath>..\bin\</BaseOutputPath>
     </PropertyGroup>
 
     <ItemGroup>

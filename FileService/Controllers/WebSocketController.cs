@@ -1,22 +1,31 @@
-using System.Net.WebSockets;
-using System.Text;
 using Backend.Storage;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.WebSockets;
 
 namespace Backend.Controllers;
 
 [ApiController]
-public class WebSocketController(ILogger<WebSocketController> logger) : ControllerBase
+[Route("ws")]
+public class WebSocketController : ControllerBase
 {
-    [Route("/ws")]
+    private readonly ILogger<WebSocketController> _logger;
+    private readonly IWebSocketContainer _webSocketContainer;
+
+
+    public WebSocketController(ILogger<WebSocketController> logger, IWebSocketContainer webSocketContainer)
+    {
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _webSocketContainer = webSocketContainer ?? throw new ArgumentNullException(nameof(webSocketContainer));
+    }
+
     [HttpGet] // This is not required. kept to make swagger happy
-    public async void Connect()
+    public async Task ConnectAsync()
     {
         if (HttpContext.WebSockets.IsWebSocketRequest)
         {
-            using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-            logger.LogInformation($"Connected WS {webSocket.GetHashCode()}");
-            SaveConnection(webSocket);
+            var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+            _logger.LogInformation($"Connected WS {webSocket.GetHashCode()}");
+            _webSocketContainer.AddWebSocket(webSocket);
         }
         else
         {
@@ -24,31 +33,19 @@ public class WebSocketController(ILogger<WebSocketController> logger) : Controll
         }
     }
 
-    private async void SaveConnection(WebSocket webSocket)
+#if DEBUG
+    [HttpGet("checkin")]
+    public async Task CheckinAsync()
     {
-        Container.ConnectedSockets.Add(webSocket);
-        
-        var buffer = new byte[1024 * 4];
-        var receiveResult = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+        _logger.LogInformation("Requesting check-in");
+        await _webSocketContainer.RequestCheckinAsync();
+    }
+#endif
 
-        while (!receiveResult.CloseStatus.HasValue)
-        {
-            logger.LogInformation($"sending {Encoding.UTF8.GetString(buffer)}");
-            await webSocket.SendAsync(
-                new ArraySegment<byte>(buffer, 0, receiveResult.Count),
-                receiveResult.MessageType,
-                receiveResult.EndOfMessage,
-                CancellationToken.None);
-
-            receiveResult = await webSocket.ReceiveAsync(
-                new ArraySegment<byte>(buffer), CancellationToken.None);
-        }
-
-        await webSocket.CloseAsync(
-            receiveResult.CloseStatus.Value,
-            receiveResult.CloseStatusDescription,
-            CancellationToken.None);
-        
-        webSocket.Dispose();
+    [HttpDelete]
+    public async Task CloseAllAsync()
+    {
+        _logger.LogInformation("Closing all WebSockets");
+        await _webSocketContainer.CloseWebSocketAsync();
     }
 }
