@@ -1,6 +1,6 @@
 using Backend.Storage;
+using Common;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.WebSockets;
 
 namespace Backend.Controllers;
 
@@ -10,7 +10,6 @@ public class WebSocketController : ControllerBase
 {
     private readonly ILogger<WebSocketController> _logger;
     private readonly IWebSocketContainer _webSocketContainer;
-
 
     public WebSocketController(ILogger<WebSocketController> logger, IWebSocketContainer webSocketContainer)
     {
@@ -25,7 +24,12 @@ public class WebSocketController : ControllerBase
         {
             var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
             _logger.LogInformation($"Connected WS {webSocket.GetHashCode()}");
-            _webSocketContainer.AddWebSocket(webSocket);
+
+            var msg = await webSocket.ReadAsync();
+            _logger.LogInformation($"Reviced: {msg}");
+            await webSocket.WriteAsync("pong");
+            
+            await _webSocketContainer.Listen(webSocket);
         }
         else
         {

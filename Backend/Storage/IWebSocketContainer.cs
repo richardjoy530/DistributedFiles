@@ -4,7 +4,7 @@ namespace Backend.Storage
 {
     public interface IWebSocketContainer
     {
-        void AddWebSocket(WebSocket webSocket);
+        Task Listen(WebSocket webSocket);
 
         Task RequestCheckinAsync();
 

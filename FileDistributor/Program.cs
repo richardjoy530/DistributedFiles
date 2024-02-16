@@ -6,7 +6,6 @@ public abstract class Program
     {
         var builder = WebApplication.CreateBuilder(args);
         
-        new Checkin().Ping();
         
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
@@ -22,6 +21,9 @@ public abstract class Program
         }
 
         app.UseHttpsRedirection();
+
+        var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        Connector.EstablishConnection(logger);
 
         app.Run();
     }

@@ -10,27 +10,27 @@ public class FileController : ControllerBase
 {
     private readonly ILogger<FileController> _logger;
     private readonly IWebSocketContainer _webSocketContainer;
-    private readonly IFileQueueContainer _fileQueueContainer;
+    private readonly IFileContainer _fileContainer;
 
-    public FileController(ILogger<FileController> logger, IWebSocketContainer webSocketContainer, IFileQueueContainer fileQueueContainer)
+    public FileController(ILogger<FileController> logger, IWebSocketContainer webSocketContainer, IFileContainer fileQueueContainer)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _webSocketContainer = webSocketContainer ?? throw new ArgumentNullException(nameof(webSocketContainer));
-        _fileQueueContainer = fileQueueContainer ?? throw new ArgumentNullException(nameof(fileQueueContainer));
+        _fileContainer = fileQueueContainer ?? throw new ArgumentNullException(nameof(fileQueueContainer));
     }
 
     [HttpPost]
     public async Task UploadAsync(IFormFile file)
     {
         _logger.LogInformation($"Recived file {file.FileName}");
-        _fileQueueContainer.EnQueue(file);
+        _fileContainer.Add(file);
         await _webSocketContainer.RequestCheckinAsync();
     }
 
-    [HttpGet]
-    public IFormFile? DownloadFile()
+    [HttpGet("{filename}")]
+    public IFormFile? DownloadFile(string filename)
     {
-        var file = _fileQueueContainer.DeQueue();
+        var file = _fileContainer.Get(filename);
         if (file == null)
         {
             Response.StatusCode = (int)HttpStatusCode.NoContent;

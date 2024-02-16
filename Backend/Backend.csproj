@@ -5,11 +5,14 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <StartupObject>Backend.Program</StartupObject>
-        <BaseOutputPath>..\bin\</BaseOutputPath>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Common\Common.csproj" />
     </ItemGroup>
 
 </Project>

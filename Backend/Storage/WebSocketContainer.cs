@@ -1,4 +1,5 @@
-﻿using System.Net.WebSockets;
+﻿using Common;
+using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
 
 namespace Backend.Storage
@@ -15,10 +16,22 @@ namespace Backend.Storage
             _logger = logger;
         }
 
-        public void AddWebSocket(WebSocket webSocket)
+        public async Task Listen(WebSocket webSocket)
         {
             _logger.LogInformation($"Adding WS: {webSocket.GetHashCode()} to WebSocketContainer {webSocket.State}");
             _sockets.Add(webSocket);
+
+            while (webSocket.State == WebSocketState.Open && !webSocket.CloseStatus.HasValue)
+            {
+                var msg = await webSocket.ReadAsync();
+                _logger.LogInformation($"Received: {msg}");
+            }
+
+            await Console.Out.WriteLineAsync("Closing connection ... ");
+
+            await webSocket.CloseAsync(webSocket.CloseStatus ?? WebSocketCloseStatus.NormalClosure, webSocket.CloseStatusDescription, CancellationToken.None);
+
+            webSocket.Dispose();
         }
 
         public async Task RequestCheckinAsync()
@@ -28,7 +41,7 @@ namespace Backend.Storage
                 if (ws.State == WebSocketState.Open)
                 {
                     _logger.LogInformation($"Sending checkin message to WS: {ws.GetHashCode()}");
-                    return ws.SendAsync(new ArraySegment<byte>("Checkin"u8.ToArray()), WebSocketMessageType.Text, WebSocketMessageFlags.EndOfMessage, CancellationToken.None).AsTask();
+                    return ws.SendAsync(new ArraySegment<byte>("checkin"u8.ToArray()), WebSocketMessageType.Text, WebSocketMessageFlags.EndOfMessage, CancellationToken.None).AsTask();
                 }
 
                 return new Task(() => { });
@@ -51,12 +64,12 @@ namespace Backend.Storage
 
         private async Task Process(Func<WebSocket, Task> excecuter)
         {
+            _sockets.RemoveAll(ws => ws.State != WebSocketState.Open);
+
             foreach (var ws in _sockets)
             {
                 await excecuter(ws);
             }
-
-            //_sockets.RemoveAll(ws => ws.State != WebSocketState.Open);
         }
     }
 }

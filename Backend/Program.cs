@@ -16,7 +16,7 @@ public abstract class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
-        builder.Services.AddSingleton<IFileQueueContainer, FileQueueContainer>();
+        builder.Services.AddSingleton<IFileContainer, FileContainer>();
         builder.Services.AddSingleton<IWebSocketContainer, WebSocketContainer>();
 
         var app = builder.Build();
