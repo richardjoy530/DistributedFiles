@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Backend", "FileService\Backend.csproj", "{64D93FBB-A263-42F0-8D16-F836DFA34EF7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Backend", "Backend\Backend.csproj", "{64D93FBB-A263-42F0-8D16-F836DFA34EF7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileDistributor", "FileDistributor\FileDistributor.csproj", "{AFC6AD32-CECF-4E56-ADD8-B3FFDAA09AA0}"
 EndProject
