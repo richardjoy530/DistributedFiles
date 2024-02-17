@@ -1,12 +1,15 @@
 ﻿
+
 namespace Backend.Storage
 {
     public interface IFileDistributorManager
     {
         string[] GetAllFileNames();
 
-        string GetRetrivalLink(string fileName);
+        HostString GetRetrivalHost(string fileName);
 
-        void UpdateFileAvailablity(string remoteHost, string[] availableFileNames);
+        void RemoveHost(HostString host);
+
+        void UpdateFileAvailablity(HostString remoteHost, string[] availableFileNames);
     }
 }

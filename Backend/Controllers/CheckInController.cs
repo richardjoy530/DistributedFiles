@@ -24,13 +24,14 @@ namespace Backend.Controllers
             var containerFiles = _fileContainer.GetTempFileNames().ToArray();
             var intersection = containerFiles.Intersect(request.AvailableFileNames).ToArray();
             _fileContainer.DiscardFiles(intersection);
+            _fileDistributorManager.RemoveHost(request.HostString);
 
             // updating the file availability table
-            _fileDistributorManager.UpdateFileAvailablity(request.HostString.ToString(), request.AvailableFileNames);
+            _fileDistributorManager.UpdateFileAvailablity(request.HostString, request.AvailableFileNames);
 
             var filesToRetrive = _fileDistributorManager.GetAllFileNames().ToList();
             filesToRetrive.RemoveAll(f => intersection.Contains(f));
-            var retrievalLinks = filesToRetrive.ToDictionary(f => f, _fileDistributorManager.GetRetrivalLink);
+            var retrievalLinks = filesToRetrive.ToDictionary(f => f, _fileDistributorManager.GetRetrivalHost);
 
             return new ServerCheckinResponse { FileLinks = retrievalLinks };
         }

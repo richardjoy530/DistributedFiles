@@ -24,12 +24,13 @@ namespace Backend.Tests
             _fileContainer.Setup(i => i.DiscardFiles(It.IsAny<string[]>()));
 
             _fileDistributorManager = new Mock<IFileDistributorManager>();
-            _fileDistributorManager.Setup(i => i.UpdateFileAvailablity(new HostString("1.1.1.1", 443).ToString(), remoteFiles));
+            _fileDistributorManager.Setup(i => i.UpdateFileAvailablity(new HostString("1.1.1.1", 443), remoteFiles));
             _fileDistributorManager.Setup(i => i.GetAllFileNames()).Returns(totalFiles);
+            _fileDistributorManager.Setup(i => i.RemoveHost(new HostString("1.1.1.1", 443)));
 
             foreach (var fileName in totalFiles)
             {
-                _fileDistributorManager.Setup(i => i.GetRetrivalLink(fileName)).Returns($"fs1:{fileName}");
+                _fileDistributorManager.Setup(i => i.GetRetrivalHost(fileName)).Returns(new HostString("1.1.1.1", 443));
             }
 
             var controller = GetController();
@@ -40,14 +41,8 @@ namespace Backend.Tests
             Assert.That(resp.FileLinks.Count, Is.EqualTo(retrivalCount));
             foreach (var fileName in resp.FileLinks.Keys)
             {
-                Assert.That(resp.FileLinks[fileName], Is.EqualTo($"fs1:{fileName}"));
+                Assert.That(resp.FileLinks[fileName], Is.EqualTo(new HostString("1.1.1.1", 443)));
             }
-        }
-
-        [Test]
-        public void Test2()
-        {
-            Assert.Pass();
         }
 
         private CheckInController GetController()

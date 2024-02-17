@@ -1,6 +1,5 @@
 ﻿using Common;
 using System.Net.WebSockets;
-using System.Runtime.CompilerServices;
 
 namespace Backend.Storage
 {

@@ -2,13 +2,13 @@
 {
     public class FileContainer : IFileContainer
     {
-        private readonly ILogger<FileContainer> _logger;
         private readonly List<IFormFile> _files;
+        private readonly ILogger<FileContainer> _logger;
 
         public FileContainer(ILogger<FileContainer> logger)
         {
-            _logger = logger;
             _files = new List<IFormFile>();
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public IFormFile? Get(string filename)
