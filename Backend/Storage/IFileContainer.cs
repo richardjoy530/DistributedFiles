@@ -1,11 +1,14 @@
-﻿namespace Backend.Storage
+﻿
+namespace Backend.Storage
 {
     public interface IFileContainer
     {
-        List<IFormFile> Files { get; }
-
         void Add(IFormFile formFile);
 
+        void DiscardFiles(string[] filesToRemoveFromContainer);
+
         IFormFile? Get(string filename);
+
+        IEnumerable<string> GetTempFileNames();
     }
 }

@@ -9,26 +9,30 @@ namespace Backend.Controllers
     public class CheckInController : ControllerBase
     {
         private readonly IFileDistributorManager _fileDistributorManager;
+        private readonly IFileContainer _fileContainer;
 
-        public CheckInController(IFileDistributorManager fileDistributorManager)
+        public CheckInController(IFileDistributorManager fileDistributorManager, IFileContainer fileContainer)
         {
             _fileDistributorManager = fileDistributorManager ?? throw new ArgumentNullException(nameof(fileDistributorManager));
+            _fileContainer = fileContainer ?? throw new ArgumentNullException(nameof(fileContainer));
         }
 
         [HttpPost]
-        public ServerCheckinResponse CheckIn(FileServerInfo request)
+        public ServerCheckinResponse CheckIn(AvailableFiles request)
         {
-            var remoteIp = Request.HttpContext.Connection.RemoteIpAddress?.ToString() ?? throw new ArgumentException("RemoteIpAddress");
-            var remoteHost = new HostString(remoteIp, Request.HttpContext.Connection.RemotePort);
-            
-            //todo: remove from file contaner.
+            // discarding files saved in the container when its already in the file-server
+            var containerFiles = _fileContainer.GetTempFileNames().ToArray();
+            var intersection = containerFiles.Intersect(request.AvailableFileNames).ToArray();
+            _fileContainer.DiscardFiles(intersection);
 
-            _fileDistributorManager.UpdateFileAvailablity(remoteHost.ToString(), request.AvailableFileNames);
-            var fileNames = _fileDistributorManager.FilesToSync(request.AvailableFileNames);
+            // updating the file availability table
+            _fileDistributorManager.UpdateFileAvailablity(request.HostString.ToString(), request.AvailableFileNames);
 
-            var retrievalList = fileNames.ToDictionary(f => f, _fileDistributorManager.GetRetrivalLinks);
+            var filesToRetrive = _fileDistributorManager.GetAllFileNames().ToList();
+            filesToRetrive.RemoveAll(f => intersection.Contains(f));
+            var retrievalLinks = filesToRetrive.ToDictionary(f => f, _fileDistributorManager.GetRetrivalLink);
 
-            return new ServerCheckinResponse { FileLinks = retrievalList };
+            return new ServerCheckinResponse { FileLinks = retrievalLinks };
         }
     }
 }

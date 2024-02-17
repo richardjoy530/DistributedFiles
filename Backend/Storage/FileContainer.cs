@@ -1,10 +1,7 @@
-﻿
-namespace Backend.Storage
+﻿namespace Backend.Storage
 {
     public class FileContainer : IFileContainer
     {
-        public List<IFormFile> Files => _files;
-
         private readonly ILogger<FileContainer> _logger;
         private readonly List<IFormFile> _files;
 
@@ -22,7 +19,17 @@ namespace Backend.Storage
         public void Add(IFormFile formFile)
         {
             _logger.LogInformation($"Adding: {formFile.FileName}");
-            Files.Add(formFile);
+            _files.Add(formFile);
+        }
+
+        public void DiscardFiles(string[] filesToRemoveFromContainer)
+        {
+            _files.RemoveAll(f => filesToRemoveFromContainer.Contains(f.FileName));
+        }
+
+        public IEnumerable<string> GetTempFileNames()
+        {
+            return _files.Select(f => f.FileName);
         }
     }
 }

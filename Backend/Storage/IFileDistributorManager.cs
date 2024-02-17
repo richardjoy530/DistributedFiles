@@ -3,9 +3,9 @@ namespace Backend.Storage
 {
     public interface IFileDistributorManager
     {
-        string[] FilesToSync(string[] availableFileNames);
+        string[] GetAllFileNames();
 
-        string[] GetRetrivalLinks(string f);
+        string GetRetrivalLink(string fileName);
 
         void UpdateFileAvailablity(string remoteHost, string[] availableFileNames);
     }
