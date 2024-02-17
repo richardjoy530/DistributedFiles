@@ -18,6 +18,7 @@ public abstract class Program
 
         builder.Services.AddSingleton<IFileContainer, FileContainer>();
         builder.Services.AddSingleton<IWebSocketContainer, WebSocketContainer>();
+        builder.Services.AddSingleton<IFileDistributorManager, FileDistributorManager>();
 
         var app = builder.Build();
 
@@ -35,7 +36,7 @@ public abstract class Program
 
         app.UseWebSockets(webSocketOptions);
 
-        app.UseHttpsRedirection();
+        // app.UseHttpsRedirection();
 
         app.MapControllers();
 
