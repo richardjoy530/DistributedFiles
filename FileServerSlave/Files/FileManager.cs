@@ -1,4 +1,6 @@
-﻿namespace FileServerSlave.Files
+﻿using Common.Proxy.Controllers;
+
+namespace FileServerSlave.Files
 {
     public class FileManager : IFileManager
     {
@@ -33,16 +35,16 @@
             return [];
         }
 
-        public async Task SaveFile(IFormFile formFile)
+        public async Task SaveFile(FileData file)
         {
-            using var stream = formFile.OpenReadStream();
+            using var stream = new MemoryStream(file.Content);
 
             if (!Directory.Exists(_distributedFolder))
             {
                 Directory.CreateDirectory(_distributedFolder);
             }
 
-            using var fileStream = new FileStream(Path.Combine(_distributedFolder, formFile.FileName), FileMode.Create);
+            using var fileStream = new FileStream(Path.Combine(_distributedFolder, file.FileName), FileMode.Create);
             await stream.CopyToAsync(fileStream);
         }
 

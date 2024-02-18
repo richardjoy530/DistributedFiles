@@ -1,4 +1,6 @@
-﻿namespace FileServerSlave.Files
+﻿using Common.Proxy.Controllers;
+
+namespace FileServerSlave.Files
 {
     public interface IFileManager
     {
@@ -6,6 +8,6 @@
 
         byte[] GetFile(string filename);
 
-        Task SaveFile(IFormFile formFile);
+        Task SaveFile(FileData file);
     }
 }

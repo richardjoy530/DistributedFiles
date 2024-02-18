@@ -34,7 +34,7 @@ namespace FileServerMaster.Storage
             {
                 if (hosts.Contains(host))
                 {
-                    while (true) // assuming there is only new hosts per file. todo need to come up with another great idea. 
+                    while (true) // assuming there is only few hosts per file. todo need to come up with another great idea. 
                     {
                         var temp = hosts.Dequeue();
                         if (temp == host)

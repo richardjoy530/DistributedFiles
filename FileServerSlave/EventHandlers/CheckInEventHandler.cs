@@ -40,6 +40,7 @@ namespace FileServerSlave.EventHandlers
             if (e is not CheckInEvent _)
             {
                 _logger.LogError("cannot handle event of type \"{type}\"", e.GetType().Name);
+                return;
             }
 
             var req = new FileServerMaster.Web.Contracts.AvailableFiles

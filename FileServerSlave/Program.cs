@@ -1,5 +1,6 @@
 using FileServerSlave.EventHandlers;
 using FileServerSlave.Events;
+using FileServerSlave.Files;
 
 namespace FileServerSlave;
 
@@ -17,9 +18,15 @@ public abstract partial class Program
         builder.Services.AddSwaggerGen();
 
         builder.Services.AddSingleton<ISocketManager, SocketManager>();
+
         builder.Services.AddSingleton<IEventDispatcher, EventDispatcher>();
         builder.Services.AddSingleton<IEventHandlerResolver, EventHandlerResolver>();
+
         builder.Services.AddKeyedSingleton<IEventHandler, CheckInEventHandler>(nameof(CheckInEvent));
+        builder.Services.AddKeyedSingleton<IEventHandler, DownLoadEventHandler>(nameof(DownloadEvent));
+
+        builder.Services.AddSingleton<ISlaveHostStringRetriver, SlaveHostStringRetriver>();
+        builder.Services.AddSingleton<IFileManager, FileManager>();
 
         var app = builder.Build();
 

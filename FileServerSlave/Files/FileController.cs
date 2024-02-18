@@ -1,5 +1,4 @@
 ﻿using Common.Proxy.Controllers;
-using FileServerSlave.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
@@ -18,17 +17,25 @@ namespace FileServerSlave.Files
 
         // need to optimize this endpoints. use stream.
         [HttpGet("{filename}")]
-        public byte[] DownLoadFile(string filename)
+        public FileData DownLoadFile(string filename)
         {
             var file = _fileManager.GetFile(filename);
             if (file.Length == 0)
             {
                 Response.StatusCode = (int)HttpStatusCode.NoContent;
-                return [];
+                return new FileData
+                {
+                    FileName = string.Empty,
+                    Content = []
+                };
             }
 
             Response.ContentType = "image/jpg";
-            return file;
+            return new FileData
+            {
+                FileName = filename,
+                Content = file
+            };
         }
     }
 }

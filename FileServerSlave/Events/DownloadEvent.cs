@@ -2,11 +2,13 @@
 {
     public class DownloadEvent : EventBase
     {
-        public readonly KeyValuePair<string, HostString> FileLink;
+        public readonly HostString HostString;
+        public readonly string FileName;
 
         public DownloadEvent(KeyValuePair<string, HostString> filelink)
         {
-            FileLink = filelink;
+            FileName = filelink.Key;
+            HostString = filelink.Value;
         }
     }
 }

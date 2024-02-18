@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace Common.Proxy.Controllers
 {
@@ -6,6 +6,6 @@ namespace Common.Proxy.Controllers
     {
         [HttpGet]
         [Route("file/{filename}")]
-        byte[] DownLoadFile(string filename);
+        FileData DownLoadFile(string filename);
     }
 }

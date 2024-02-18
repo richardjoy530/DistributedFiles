@@ -34,17 +34,25 @@ public class FileController : ControllerBase, IMasterFileController, IFileContro
     }
 
     [HttpGet("{filename}")]
-    public byte[] DownLoadFile(string filename)
+    public FileData DownLoadFile(string filename)
     {
         var file = _fileContainer.Get(filename);
         if (file == null)
         {
             Response.StatusCode = (int)HttpStatusCode.NoContent;
-            return [];
+            return new FileData
+            {
+                FileName = string.Empty,
+                Content = []
+            };
         }
 
         Response.ContentType = "image/jpg";
-        return GetBytes(file.OpenReadStream());
+        return new FileData
+        {
+            FileName = filename,
+            Content = GetBytes(file.OpenReadStream())
+        };
     }
 
     private static byte[] GetBytes(Stream stream)
