@@ -15,20 +15,21 @@ namespace FileServerMaster.Storage
             _logger = logger;
         }
 
-        public async Task Listen(WebSocket webSocket) // todo: improve
+        public async Task Listen(WebSocket ws) // todo: improve
         {
-            _logger.LogInformation($"Adding WS: {webSocket.GetHashCode()} to WebSocketContainer");
-            _sockets.Add(webSocket);
+            _sockets.Add(ws);
 
-            while (webSocket.State == WebSocketState.Open && !webSocket.CloseStatus.HasValue)
+            var (ReciveResult, Message) = await ws.ReadAsync();
+            while (!ws.CloseStatus.HasValue)
             {
-                var rslt = await webSocket.ReadAsync();
-                if (rslt.ReciveResult.MessageType == WebSocketMessageType.Close)
+                _logger.LogInformation("recived message: \"{Message}\"", Message);
+
+                if (ReciveResult.MessageType == WebSocketMessageType.Close)
                 {
-                    _logger.LogInformation($"Closing WS: {webSocket.GetHashCode}");
-                    await webSocket.CloseAsync(webSocket.CloseStatus ?? WebSocketCloseStatus.NormalClosure, webSocket.CloseStatusDescription, CancellationToken.None);
-                    webSocket.Dispose();
+                    _logger.LogInformation("closing connection (remote server initiated close message)");
+                    await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, ReciveResult.CloseStatusDescription, CancellationToken.None);
                 }
+                (ReciveResult, Message) = await ws.ReadAsync(); // what happens if this crashes?.
             }
         }
 

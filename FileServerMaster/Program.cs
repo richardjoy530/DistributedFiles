@@ -1,4 +1,3 @@
-using System.Net.WebSockets;
 using FileServerMaster.Storage;
 
 namespace FileServerMaster;
@@ -28,6 +27,10 @@ public abstract class Program
             app.UseSwagger();
             app.UseSwaggerUI();
         }
+        else
+        {
+            app.UseHttpsRedirection();
+        }
 
         var webSocketOptions = new WebSocketOptions()
         {
@@ -35,8 +38,6 @@ public abstract class Program
         };
 
         app.UseWebSockets(webSocketOptions);
-
-        // app.UseHttpsRedirection();
 
         app.MapControllers();
 

@@ -24,24 +24,26 @@ public class WebSocketController : ControllerBase
     {
         if (HttpContext.WebSockets.IsWebSocketRequest)
         {
-            var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-
-            var rslt = await webSocket.ReadAsync();
-            _logger.LogInformation($"Reviced: {rslt.Message}");
+            using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+            var (_, Message) = await webSocket.ReadAsync();
+            _logger.LogInformation("recived message: \"{Message}\"", Message);
             await webSocket.WriteAsync("pong");
 
             try
             {
                 await _webSocketContainer.Listen(webSocket);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw;
+                _logger.LogWarning(ex.Message);
+                _logger.LogTrace(new EventId(0), ex, ex.Message);
             }
             finally
             {
                 // need to come up with an idea to remove this server's file host from the availablity table.
-                webSocket.Dispose();
+                _logger.LogInformation("disposing connection");
+                webSocket?.Dispose();
+                _logger.LogInformation("disposed connection");
             }
         }
         else

@@ -1,5 +1,8 @@
 using Common;
 using FileServerSlave.Events;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
+using System.Net;
 using System.Net.WebSockets;
 
 namespace FileServerSlave;
@@ -8,14 +11,17 @@ public class SocketManager : ISocketManager
 {
     private readonly ILogger<SocketManager> _logger;
     private readonly IEventDispatcher _eventQueueManager;
+    private readonly IServer _server;
     private readonly HostString _hostString;
     private readonly bool _secure;
 
-    public SocketManager(ILogger<SocketManager> logger, IEventDispatcher eventQueueManager, IConfiguration configuration)
+    public SocketManager(ILogger<SocketManager> logger, IEventDispatcher eventQueueManager, IConfiguration configuration, IServer server)
     {
         ArgumentNullException.ThrowIfNull(configuration);
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _eventQueueManager = eventQueueManager ?? throw new ArgumentNullException(nameof(eventQueueManager));
+        _server = server ?? throw new ArgumentNullException(nameof(server));
+
         _ = bool.TryParse(configuration["UseHttps"], out _secure);
         if (_secure)
         {
@@ -32,7 +38,8 @@ public class SocketManager : ISocketManager
         do
         {
             await Listen(token);
-            Thread.Sleep(1000 * 60); // wait for one min
+            _logger.LogInformation("trying to reconnect after 30 seconds");
+            Thread.Sleep(1000 * 30); // wait for 30 seconds
         } while (true);
     }
 
@@ -51,6 +58,8 @@ public class SocketManager : ISocketManager
             _logger.LogInformation("connection established to \"{wsuri}\"", wsuri);
 
             await ws.WriteAsync("ping", ct);
+            var hoststrings = string.Join(';', GetLocalFileServerHosts()); // this is an edge case.. need to handle it later.
+            await ws.WriteAsync($"file server hosted at: {hoststrings}", ct);
 
             var (ReciveResult, Message) = await ws.ReadAsync(ct);
             while (!ReciveResult.CloseStatus.HasValue)
@@ -64,20 +73,21 @@ public class SocketManager : ISocketManager
                     await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, ReciveResult.CloseStatusDescription, ct);
                     break;
                 }
-                (ReciveResult, Message) = await ws.ReadAsync(ct); // what happens if this crashes.
+                (ReciveResult, Message) = await ws.ReadAsync(ct); // what happens if this crashes?.
             }
 
             await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "closing connection (remote server initiated close message)", ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message);
+            _logger.LogWarning(ex.Message);
             _logger.LogTrace(new EventId(1), ex, ex.Message);
         }
         finally
         {
             _logger.LogInformation("disposing connection");
             ws?.Dispose();
+            _logger.LogInformation("disposed connection");
         }
     }
 
@@ -88,5 +98,20 @@ public class SocketManager : ISocketManager
             var checkinEvent = new CheckInEvent();
             _eventQueueManager.FireEvent(checkinEvent);
         }
+    }
+
+    private HostString[] GetLocalFileServerHosts()
+    {
+        var host = Dns.GetHostEntry(Dns.GetHostName()).HostName;
+        var ports = _server.Features.Get<IServerAddressesFeature>()!.Addresses.Select(a => new Uri(a).Port).ToArray();
+
+        var hoststrings = new HostString[ports.Length];
+
+        for (int i = 0; i < ports.Length; i++)
+        {
+            hoststrings[i] = new HostString(host, ports[i]);
+        }
+
+        return hoststrings;
     }
 }
