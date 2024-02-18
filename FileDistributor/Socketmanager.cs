@@ -1,4 +1,5 @@
 using Common;
+using FileDistributor.Events;
 using System.Net.WebSockets;
 
 namespace FileDistributor;
@@ -6,10 +7,12 @@ namespace FileDistributor;
 public class SocketManager : ISocketmanager
 {
     private readonly ILogger<SocketManager> _logger;
+    private readonly IEventDispatcher _eventQueueManager;
 
-    public SocketManager(ILogger<SocketManager> logger)
+    public SocketManager(ILogger<SocketManager> logger, IEventDispatcher eventQueueManager)
     {
-        _logger = logger;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _eventQueueManager = eventQueueManager ?? throw new ArgumentNullException(nameof(eventQueueManager));
     }
 
     public async void EstablishConnection(CancellationToken token)
@@ -33,6 +36,8 @@ public class SocketManager : ISocketmanager
             {
                 var rslt = await ws.ReadAsync(token);
                 _logger.LogInformation($"Recived message: {rslt.Message}");
+                HandleMessage(rslt.Message);
+
                 if (rslt.ReciveResult.MessageType == WebSocketMessageType.Close)
                 {
                     _logger.LogInformation("Closing connection ... ");
@@ -52,6 +57,15 @@ public class SocketManager : ISocketmanager
         finally
         {
             ws.Dispose();
+        }
+    }
+
+    private void HandleMessage(string message)
+    {
+        if (message == "checkin")
+        {
+            var checkinEvent = new CheckInEvent();
+            _eventQueueManager.FireEvent(checkinEvent);
         }
     }
 }

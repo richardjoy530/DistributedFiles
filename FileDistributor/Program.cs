@@ -1,3 +1,5 @@
+using FileDistributor.EventHandlers;
+using FileDistributor.Events;
 using System.Runtime.InteropServices;
 
 namespace FileDistributor;
@@ -16,6 +18,9 @@ public abstract class Program
         builder.Services.AddSwaggerGen();
 
         builder.Services.AddSingleton<ISocketmanager, SocketManager>();
+        builder.Services.AddSingleton<IEventDispatcher, EventDispatcher>();
+        builder.Services.AddSingleton<IEventHandlerResolver, EventHandlerResolver>();
+        builder.Services.AddKeyedSingleton<IEventHandler, CheckInEventHandler>(nameof(CheckInEvent));
 
         var app = builder.Build();
 
