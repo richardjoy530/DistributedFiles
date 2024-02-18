@@ -1,6 +1,6 @@
-using Backend.Contracts;
 using Backend.Controllers;
 using Backend.Storage;
+using Backend.Web.Contracts;
 using Microsoft.AspNetCore.Http;
 using Moq;
 
@@ -34,7 +34,7 @@ namespace Backend.Tests
             }
 
             var controller = GetController();
-            var resp = controller.CheckIn(new AvailableFiles { AvailableFileNames = remoteFiles, HostString = new HostString("1.1.1.1", 443) });
+            var resp = controller.CheckIn(new AvailableFiles { AvailableFileNames = remoteFiles, HostString = new HostString("1.1.1.1", 443).ToString() });
 
             Assert.That(resp, Is.Not.Null);
             Assert.That(resp.FileLinks, Is.Not.Null);
