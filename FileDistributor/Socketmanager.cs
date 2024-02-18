@@ -3,9 +3,9 @@ using System.Net.WebSockets;
 
 namespace FileDistributor;
 
-public static class Connector
+public class SocketManager : ISocketmanager
 {
-    public static async void EstablishConnection(ILogger<Program> logger, CancellationToken token)
+    public async void EstablishConnection(ILogger<Program> logger, CancellationToken token)
     {
         do
         {
@@ -18,11 +18,11 @@ public static class Connector
         } while (true);
     }
 
-    private static async Task Listen(ILogger<Program> logger, ClientWebSocket ws, CancellationToken token)
+    private async Task Listen(ILogger<Program> logger, ClientWebSocket ws, CancellationToken token)
     {
         try
         {
-            
+
             while (!ws.CloseStatus.HasValue && ws.State == WebSocketState.Open)
             {
                 var rslt = await ws.ReadAsync(token);

@@ -27,7 +27,7 @@ public abstract class Program
         app.UseHttpsRedirection();
 
         var logger = app.Services.GetRequiredService<ILogger<Program>>();
-        Connector.EstablishConnection(logger, cts.Token);
+        Socketmanager.EstablishConnection(logger, cts.Token);
         SetConsoleCtrlHandler(Handler, true);
 
         app.Run();
