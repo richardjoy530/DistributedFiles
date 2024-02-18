@@ -1,7 +1,11 @@
+using System.Runtime.InteropServices;
+
 namespace FileDistributor;
 
 public abstract class Program
 {
+    private readonly static CancellationTokenSource cts = new();
+
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -23,8 +27,42 @@ public abstract class Program
         app.UseHttpsRedirection();
 
         var logger = app.Services.GetRequiredService<ILogger<Program>>();
-        Connector.EstablishConnection(logger);
+        Connector.EstablishConnection(logger, cts.Token);
+        SetConsoleCtrlHandler(Handler, true);
 
         app.Run();
+    }
+
+    [DllImport("Kernel32")]
+    private static extern bool SetConsoleCtrlHandler(SetConsoleCtrlEventHandler handler, bool add);
+
+    private delegate bool SetConsoleCtrlEventHandler(CtrlType sig);
+
+    private enum CtrlType
+    {
+        CTRL_C_EVENT = 0,
+        CTRL_BREAK_EVENT = 1,
+        CTRL_CLOSE_EVENT = 2,
+        CTRL_LOGOFF_EVENT = 5,
+        CTRL_SHUTDOWN_EVENT = 6
+    }
+
+    private static bool Handler(CtrlType signal)
+    {
+        switch (signal)
+        {
+            case CtrlType.CTRL_BREAK_EVENT:
+            case CtrlType.CTRL_C_EVENT:
+            case CtrlType.CTRL_LOGOFF_EVENT:
+            case CtrlType.CTRL_SHUTDOWN_EVENT:
+            case CtrlType.CTRL_CLOSE_EVENT:
+                Console.WriteLine("Closing ...");
+                cts.Cancel();
+                Environment.Exit(0);
+                return false;
+
+            default:
+                return false;
+        }
     }
 }

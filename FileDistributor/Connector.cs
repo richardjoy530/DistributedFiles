@@ -1,28 +1,51 @@
 using Common;
-using Microsoft.Extensions.Logging;
 using System.Net.WebSockets;
-using System.Text;
 
 namespace FileDistributor;
 
 public static class Connector
 {
-    public static async void EstablishConnection(ILogger<Program> logger)
+    public static async void EstablishConnection(ILogger<Program> logger, CancellationToken token)
     {
-        var ws = new ClientWebSocket();
-        await ws.ConnectAsync(new Uri("wss://localhost:7180/ws"), CancellationToken.None);
-
-        await ws.WriteAsync("ping");
-
-        while (!ws.CloseStatus.HasValue && ws.State == WebSocketState.Open)
+        do
         {
-            var msg = await ws.ReadAsync();
-            logger.LogInformation($"Recived message: {msg}");
+            var ws = new ClientWebSocket();
+            await ws.ConnectAsync(new Uri("ws://192.168.18.87:7180/ws"), CancellationToken.None); // for testing
+            await ws.WriteAsync("ping");
+
+            await Listen(logger, ws, token);
+            Thread.Sleep(1000 * 60); // wait for one min
+        } while (true);
+    }
+
+    private static async Task Listen(ILogger<Program> logger, ClientWebSocket ws, CancellationToken token)
+    {
+        try
+        {
+            
+            while (!ws.CloseStatus.HasValue && ws.State == WebSocketState.Open)
+            {
+                var rslt = await ws.ReadAsync(token);
+                logger.LogInformation($"Recived message: {rslt.Message}");
+                if (rslt.ReciveResult.MessageType == WebSocketMessageType.Close)
+                {
+                    logger.LogInformation("Closing connection ... ");
+                    await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, rslt.ReciveResult.CloseStatusDescription, CancellationToken.None);
+                    break;
+                }
+            }
+
+            logger.LogInformation("Closing connection ... ");
+            await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Socket was closed", CancellationToken.None);
         }
-
-        logger.LogInformation("Closing connection ... ");
-
-        await ws.CloseAsync(ws.CloseStatus?? WebSocketCloseStatus.NormalClosure, ws.CloseStatusDescription, CancellationToken.None);
-        ws.Dispose();
+        catch (Exception ex)
+        {
+            logger.LogError(ex.Message);
+            logger.LogTrace(new EventId(1), ex, ex.Message);
+        }
+        finally
+        {
+            ws.Dispose();
+        }
     }
 }

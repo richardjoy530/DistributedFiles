@@ -7,15 +7,25 @@ namespace Common
     {
         public static async Task WriteAsync(this WebSocket ws, string message)
         {
-            var bytes = Encoding.UTF8.GetBytes(message);
-            await ws.SendAsync(new ArraySegment<byte>(bytes, 0, bytes.Length), WebSocketMessageType.Text, false, CancellationToken.None);
+            await ws.WriteAsync(message, CancellationToken.None);
         }
 
-        public static async Task<string> ReadAsync(this WebSocket ws)
+        public static async Task WriteAsync(this WebSocket ws, string message, CancellationToken cancellationToken)
+        {
+            var bytes = Encoding.UTF8.GetBytes(message);
+            await ws.SendAsync(new ArraySegment<byte>(bytes, 0, bytes.Length), WebSocketMessageType.Text, false, cancellationToken);
+        }
+
+        public static async Task<(WebSocketReceiveResult ReciveResult, string Message)> ReadAsync(this WebSocket ws)
+        {
+            return await ws.ReadAsync(CancellationToken.None);
+        }
+
+        public static async Task<(WebSocketReceiveResult ReciveResult, string Message)> ReadAsync(this WebSocket ws, CancellationToken cancellationToken)
         {
             var buffer = new byte[1024 * 4];
-            await ws.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-            return Encoding.UTF8.GetString(buffer);
+            var wsr = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
+            return (wsr, Encoding.UTF8.GetString(buffer));
         }
     }
 }

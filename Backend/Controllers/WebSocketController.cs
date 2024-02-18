@@ -27,8 +27,8 @@ public class WebSocketController : ControllerBase
             var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
             _logger.LogInformation($"Connected WS {webSocket.GetHashCode()}");
 
-            var msg = await webSocket.ReadAsync();
-            _logger.LogInformation($"Reviced: {msg}");
+            var rslt = await webSocket.ReadAsync();
+            _logger.LogInformation($"Reviced: {rslt.Message}");
             await webSocket.WriteAsync("pong");
 
             try

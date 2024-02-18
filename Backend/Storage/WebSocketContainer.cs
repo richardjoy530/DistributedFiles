@@ -15,22 +15,21 @@ namespace Backend.Storage
             _logger = logger;
         }
 
-        public async Task Listen(WebSocket webSocket)
+        public async Task Listen(WebSocket webSocket) // todo: improve
         {
-            _logger.LogInformation($"Adding WS: {webSocket.GetHashCode()} to WebSocketContainer {webSocket.State}");
+            _logger.LogInformation($"Adding WS: {webSocket.GetHashCode()} to WebSocketContainer");
             _sockets.Add(webSocket);
 
             while (webSocket.State == WebSocketState.Open && !webSocket.CloseStatus.HasValue)
             {
-                var msg = await webSocket.ReadAsync();
-                _logger.LogInformation($"Received: {msg}");
+                var rslt = await webSocket.ReadAsync();
+                if (rslt.ReciveResult.MessageType == WebSocketMessageType.Close)
+                {
+                    _logger.LogInformation($"Closing WS: {webSocket.GetHashCode}");
+                    await webSocket.CloseAsync(webSocket.CloseStatus ?? WebSocketCloseStatus.NormalClosure, webSocket.CloseStatusDescription, CancellationToken.None);
+                    webSocket.Dispose();
+                }
             }
-
-            await Console.Out.WriteLineAsync("Closing connection ... ");
-
-            await webSocket.CloseAsync(webSocket.CloseStatus ?? WebSocketCloseStatus.NormalClosure, webSocket.CloseStatusDescription, CancellationToken.None);
-
-            webSocket.Dispose();
         }
 
         public async Task RequestCheckinAsync()
@@ -39,8 +38,7 @@ namespace Backend.Storage
             {
                 if (ws.State == WebSocketState.Open)
                 {
-                    _logger.LogInformation($"Sending checkin message to WS: {ws.GetHashCode()}");
-                    return ws.SendAsync(new ArraySegment<byte>("checkin"u8.ToArray()), WebSocketMessageType.Text, WebSocketMessageFlags.EndOfMessage, CancellationToken.None).AsTask();
+                    return ws.WriteAsync("checkin");
                 }
 
                 return new Task(() => { });
