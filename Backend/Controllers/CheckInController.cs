@@ -1,12 +1,13 @@
-﻿using Backend.Contracts;
+﻿using Backend.Web.Contracts;
 using Backend.Storage;
 using Microsoft.AspNetCore.Mvc;
+using Backend.Web.Controllers;
 
 namespace Backend.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    public class CheckInController : ControllerBase
+    public class CheckInController : ControllerBase, ICheckInController
     {
         private readonly IFileDistributorManager _fileDistributorManager;
         private readonly IFileContainer _fileContainer;
