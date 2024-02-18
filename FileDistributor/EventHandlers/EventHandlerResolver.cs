@@ -17,13 +17,13 @@ namespace FileDistributor.EventHandlers
 
         public IEventHandler ResolveHandlerFor(EventBase e)
         {
-            if (_eventHandlerMap.TryGetValue(nameof(e), out var handler))
+            if (_eventHandlerMap.TryGetValue(e.GetType().Name, out var handler))
             {
                 return handler;
             }
 
-            handler = _serviceProvider.GetKeyedService<IEventHandler>(nameof(e));
-            _eventHandlerMap.Add(nameof(e), handler!);
+            handler = _serviceProvider.GetKeyedService<IEventHandler>(e.GetType().Name);
+            _eventHandlerMap.Add(e.GetType().Name, handler!);
 
             return handler!;
         }

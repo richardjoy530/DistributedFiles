@@ -8,7 +8,7 @@ namespace FileDistributor.Interceptor
 
         private readonly Uri _baseUri;
 
-        public ApiInterceptor(HostString host, bool https)
+        private ApiInterceptor(HostString host, bool https)
         {
             _baseUri = new UriBuilder()
             {
@@ -32,6 +32,12 @@ namespace FileDistributor.Interceptor
             var returnValue = HttpUtils.Deserialize(invocation.Method.ReturnType, responseMessage);
 
             invocation.ReturnValue = returnValue;
+        }
+
+        public static T GetController<T>(HostString hostString, bool https)
+        {
+            var proxyGen = new ProxyGenerator();
+            return (T)proxyGen.CreateInterfaceProxyWithoutTarget(typeof(T), new ApiInterceptor(hostString, https));
         }
     }
 }

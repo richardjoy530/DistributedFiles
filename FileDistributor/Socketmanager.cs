@@ -19,19 +19,21 @@ public class SocketManager : ISocketmanager
     {
         do
         {
-            var ws = new ClientWebSocket();
-            await ws.ConnectAsync(new Uri("ws://192.168.18.87:7180/ws"), CancellationToken.None); // for testing
-            await ws.WriteAsync("ping");
-
-            await Listen(ws, token);
+            
+            await Listen(token);
             Thread.Sleep(1000 * 60); // wait for one min
         } while (true);
     }
 
-    private async Task Listen(ClientWebSocket ws, CancellationToken token)
+    private async Task Listen(CancellationToken token)
     {
+        ClientWebSocket? ws = null;
         try
         {
+            ws = new ClientWebSocket();
+            await ws.ConnectAsync(new Uri("ws://192.168.18.87:7180/ws"), CancellationToken.None); // for testing
+            await ws.WriteAsync("ping");
+
             while (!ws.CloseStatus.HasValue && ws.State == WebSocketState.Open)
             {
                 var rslt = await ws.ReadAsync(token);
@@ -56,13 +58,13 @@ public class SocketManager : ISocketmanager
         }
         finally
         {
-            ws.Dispose();
+            ws?.Dispose();
         }
     }
 
     private void HandleMessage(string message)
     {
-        if (message == "checkin")
+        if (message.Contains("checkin"))
         {
             var checkinEvent = new CheckInEvent();
             _eventQueueManager.FireEvent(checkinEvent);
