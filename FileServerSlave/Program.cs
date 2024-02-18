@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace FileServerSlave;
 
-public abstract class Program
+public abstract partial class Program
 {
     private readonly static CancellationTokenSource cts = new();
 
@@ -38,8 +38,9 @@ public abstract class Program
         app.Run();
     }
 
-    [DllImport("Kernel32")]
-    private static extern bool SetConsoleCtrlHandler(SetConsoleCtrlEventHandler handler, bool add);
+    [LibraryImport("Kernel32")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool SetConsoleCtrlHandler(SetConsoleCtrlEventHandler handler, [MarshalAs(UnmanagedType.Bool)] bool add);
 
     private delegate bool SetConsoleCtrlEventHandler(CtrlType sig);
 

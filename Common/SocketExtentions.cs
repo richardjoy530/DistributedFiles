@@ -25,7 +25,7 @@ namespace Common
         {
             var buffer = new byte[1024 * 4];
             var wsr = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
-            return (wsr, Encoding.UTF8.GetString(buffer));
+            return (wsr, Encoding.UTF8.GetString(buffer).Trim());
         }
     }
 }

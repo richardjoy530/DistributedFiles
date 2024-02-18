@@ -15,7 +15,7 @@ namespace FileServerSlave.Interceptor
             FromBody
         }
 
-        private static readonly JsonSerializerSettings _jsonSerializationSettings = new JsonSerializerSettings
+        private static readonly JsonSerializerSettings _jsonSerializationSettings = new()
         {
             Converters = { new StringEnumConverter() }
         };
@@ -26,14 +26,14 @@ namespace FileServerSlave.Interceptor
 
             var parameters = methodInfo
                 .GetParameters()
-                .Select((p, i) => (Binding: GetParameterBinding(p, path), Type: p.ParameterType, Name: p.Name, Value: args[i]))
+                .Select((p, i) => (Binding: GetParameterBinding(p, path), Type: p.ParameterType, p.Name, Value: args[i]))
                 .ToList();
 
             var pathParameters = parameters
                 .Where(x => x.Binding == ParameterBinding.FromUriPath)
                 .ToList();
 
-            var uriBuilder = new UriBuilder(new Uri(baseUri, GetUriPath(path, pathParameters)));
+            var uriBuilder = new UriBuilder(new Uri(baseUri, GetUriPath(path, pathParameters!)));
 
             var httpRequestMessage = new HttpRequestMessage(GetHttpMethod(methodInfo), uriBuilder.Uri);
 
@@ -41,18 +41,20 @@ namespace FileServerSlave.Interceptor
                 .Where(x => x.Binding == ParameterBinding.FromBody)
                 .ToList();
 
-            if (bodyParameters.Any())
+            if (bodyParameters.Count != 0)
             {
                 var bodyParameter = bodyParameters.Single();
-                var formatter = new JsonMediaTypeFormatter();
-                formatter.SerializerSettings = _jsonSerializationSettings;
+                var formatter = new JsonMediaTypeFormatter
+                {
+                    SerializerSettings = _jsonSerializationSettings
+                };
                 httpRequestMessage.Content = new ObjectContent(bodyParameter.Type, bodyParameter.Value, formatter);
             }
 
             return httpRequestMessage;
         }
 
-        public static object Deserialize(Type type, HttpResponseMessage httpResponseMessage)
+        public static object? Deserialize(Type type, HttpResponseMessage httpResponseMessage)
         {
             string GetResponseContent() => httpResponseMessage.Content.ReadAsStringAsync().Result;
 
@@ -98,13 +100,13 @@ namespace FileServerSlave.Interceptor
 
         private static string GetUriPath(string actionRoute, IEnumerable<(ParameterBinding binding, Type type, string Name, object Value)> uriPathParameters)
         {
-            foreach (var parameter in uriPathParameters)
+            foreach (var (binding, type, Name, Value) in uriPathParameters)
             {
-                if (parameter.Value == null)
+                if (Value == null)
                 {
-                    throw new ArgumentNullException(parameter.Name);
+                    throw new ArgumentNullException(Name);
                 }
-                actionRoute = actionRoute.Replace($"{{{parameter.Name}}}", WebUtility.UrlEncode(WebUtility.UrlEncode(parameter.Value.ToString())));
+                actionRoute = actionRoute.Replace($"{{{Name}}}", WebUtility.UrlEncode(WebUtility.UrlEncode(Value.ToString())));
             }
 
             return actionRoute;

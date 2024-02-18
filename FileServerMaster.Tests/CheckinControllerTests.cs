@@ -38,7 +38,7 @@ namespace FileServerMaster.Tests
 
             Assert.That(resp, Is.Not.Null);
             Assert.That(resp.FileLinks, Is.Not.Null);
-            Assert.That(resp.FileLinks.Count, Is.EqualTo(retrivalCount));
+            Assert.That(resp.FileLinks, Has.Count.EqualTo(retrivalCount));
             foreach (var fileName in resp.FileLinks.Keys)
             {
                 Assert.That(resp.FileLinks[fileName], Is.EqualTo(new HostString("1.1.1.1", 443)));
@@ -47,7 +47,7 @@ namespace FileServerMaster.Tests
 
         private CheckInController GetController()
         {
-            return new CheckInController(_fileDistributorManager.Object, _fileContainer.Object);
+            return new CheckInController(_fileDistributorManager!.Object, _fileContainer!.Object);
         }
     }
 }
