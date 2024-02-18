@@ -15,6 +15,8 @@ public abstract class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
+        builder.Services.AddSingleton<ISocketmanager, SocketManager>();
+
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -26,8 +28,8 @@ public abstract class Program
 
         app.UseHttpsRedirection();
 
-        var logger = app.Services.GetRequiredService<ILogger<Program>>();
-        Socketmanager.EstablishConnection(logger, cts.Token);
+        var sm = app.Services.GetRequiredService<ISocketmanager>();
+        sm.EstablishConnection(cts.Token);
         SetConsoleCtrlHandler(Handler, true);
 
         app.Run();
