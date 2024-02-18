@@ -10,7 +10,7 @@ namespace FileServerSlave.Files
         {
             ArgumentNullException.ThrowIfNull(configuration);
 
-            _distributedFolder = configuration["_distributedFolder"]!;
+            _distributedFolder = configuration["DistributedFolder"]!;
         }
 
         public string[] GetAvailableFilesOnThisServer()

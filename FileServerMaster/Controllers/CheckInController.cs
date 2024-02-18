@@ -28,7 +28,7 @@ namespace FileServerMaster.Controllers
 
             foreach (var hostString in request.SlaveHostStrings) // usually this will be just 1 or 2 loop
             {
-                _fileDistributorManager.RemoveHost(new HostString(hostString));
+                _fileDistributorManager.RemoveHost(new HostString(hostString)); // todo .. there is some problem here.
             }
 
             foreach (var hostString in request.SlaveHostStrings) // usually this will be just 1 or 2 loop
