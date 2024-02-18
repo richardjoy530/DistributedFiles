@@ -1,3 +1,4 @@
+using Common.Proxy.Controllers;
 using FileServerMaster.Storage;
 using FileServerMaster.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +8,7 @@ namespace FileServerMaster.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class FileController : ControllerBase, IFileController
+public class FileController : ControllerBase, IMasterFileController, IFileController
 {
     private readonly ILogger<FileController> _logger;
     private readonly IWebSocketContainer _webSocketContainer;
@@ -33,13 +34,36 @@ public class FileController : ControllerBase, IFileController
     }
 
     [HttpGet("{filename}")]
-    public IFormFile? DownloadFile(string filename)
+    public byte[] DownLoadFile(string filename)
     {
         var file = _fileContainer.Get(filename);
         if (file == null)
         {
             Response.StatusCode = (int)HttpStatusCode.NoContent;
+            return [];
         }
-        return file;
+
+        Response.ContentType = "image/jpg";
+        return GetBytes(file.OpenReadStream());
+    }
+
+    private static byte[] GetBytes(Stream stream)
+    {
+        var streamLength = (int)stream.Length; // total number of bytes read
+        var numBytesReadPosition = 0; // actual number of bytes read
+        var fileInBytes = new byte[streamLength];
+
+        while (streamLength > 0)
+        {
+            // Read may return anything from 0 to numBytesToRead.
+            var n = stream.Read(fileInBytes, numBytesReadPosition, streamLength);
+            // Break when the end of the file is reached.
+            if (n == 0)
+                break;
+            numBytesReadPosition += n;
+            streamLength -= n;
+        }
+
+        return fileInBytes;
     }
 }

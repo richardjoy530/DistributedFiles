@@ -1,8 +1,5 @@
 using Common;
 using FileServerSlave.Events;
-using Microsoft.AspNetCore.Hosting.Server;
-using Microsoft.AspNetCore.Hosting.Server.Features;
-using System.Net;
 using System.Net.WebSockets;
 
 namespace FileServerSlave;
@@ -11,16 +8,16 @@ public class SocketManager : ISocketManager
 {
     private readonly ILogger<SocketManager> _logger;
     private readonly IEventDispatcher _eventQueueManager;
-    private readonly IServer _server;
+    private readonly ISlaveHostStringRetriver _slaveHostStringRetriver;
     private readonly HostString _hostString;
     private readonly bool _secure;
 
-    public SocketManager(ILogger<SocketManager> logger, IEventDispatcher eventQueueManager, IConfiguration configuration, IServer server)
+    public SocketManager(ILogger<SocketManager> logger, IEventDispatcher eventQueueManager, IConfiguration configuration, ISlaveHostStringRetriver slaveHostStringRetriver)
     {
         ArgumentNullException.ThrowIfNull(configuration);
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _eventQueueManager = eventQueueManager ?? throw new ArgumentNullException(nameof(eventQueueManager));
-        _server = server ?? throw new ArgumentNullException(nameof(server));
+        _slaveHostStringRetriver = slaveHostStringRetriver ?? throw new ArgumentNullException(nameof(slaveHostStringRetriver));
 
         _ = bool.TryParse(configuration["UseHttps"], out _secure);
         if (_secure)
@@ -58,7 +55,7 @@ public class SocketManager : ISocketManager
             _logger.LogInformation("connection established to \"{wsuri}\"", wsuri);
 
             await ws.WriteAsync("ping", ct);
-            var hoststrings = string.Join(';', GetLocalFileServerHosts()); // this is an edge case.. need to handle it later.
+            var hoststrings = string.Join(';', _slaveHostStringRetriver.GetLocalFileServerHosts()); // this is an edge case.. need to handle it later.
             await ws.WriteAsync($"file server hosted at: {hoststrings}", ct);
 
             var (ReciveResult, Message) = await ws.ReadAsync(ct);
@@ -98,20 +95,5 @@ public class SocketManager : ISocketManager
             var checkinEvent = new CheckInEvent();
             _eventQueueManager.FireEvent(checkinEvent);
         }
-    }
-
-    private HostString[] GetLocalFileServerHosts()
-    {
-        var host = Dns.GetHostEntry(Dns.GetHostName()).HostName;
-        var ports = _server.Features.Get<IServerAddressesFeature>()!.Addresses.Select(a => new Uri(a).Port).ToArray();
-
-        var hoststrings = new HostString[ports.Length];
-
-        for (int i = 0; i < ports.Length; i++)
-        {
-            hoststrings[i] = new HostString(host, ports[i]);
-        }
-
-        return hoststrings;
     }
 }

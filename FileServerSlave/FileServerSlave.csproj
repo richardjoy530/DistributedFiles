@@ -9,6 +9,10 @@
 	</PropertyGroup>
 
     <ItemGroup>
+      <Content Include="Properties\launchSettings.json" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Castle.Core" Version="5.1.1" />
         <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="6.0.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.1" />

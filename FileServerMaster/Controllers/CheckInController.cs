@@ -25,10 +25,10 @@ namespace FileServerMaster.Controllers
             var containerFiles = _fileContainer.GetTempFileNames().ToArray();
             var intersection = containerFiles.Intersect(request.AvailableFileNames).ToArray();
             _fileContainer.DiscardFiles(intersection);
-            _fileDistributorManager.RemoveHost(new HostString(request.HostString));
+            _fileDistributorManager.RemoveHost(new HostString(request.SlaveHostStrings));
 
             // updating the file availability table
-            _fileDistributorManager.UpdateFileAvailablity(new HostString(request.HostString), request.AvailableFileNames);
+            _fileDistributorManager.UpdateFileAvailablity(new HostString(request.SlaveHostStrings), request.AvailableFileNames);
 
             var filesToRetrive = _fileDistributorManager.GetAllFileNames().ToList();
             filesToRetrive.RemoveAll(f => intersection.Contains(f));

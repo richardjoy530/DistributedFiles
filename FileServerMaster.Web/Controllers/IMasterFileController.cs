@@ -3,12 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FileServerMaster.Web.Controllers
 {
-    public interface IFileController
+    public interface IMasterFileController
     {
-        [HttpGet]
-        [Route("file/{filename}")]
-        IFormFile? DownloadFile(string filename);
-
         [HttpPost]
         [Route("file")]
         Task UploadAsync(IFormFile file);
