@@ -1,4 +1,4 @@
-﻿namespace Backend.Contracts
+﻿namespace Backend.Web.Contracts
 {
     public class AvailableFiles
     {

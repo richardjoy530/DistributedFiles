@@ -1,4 +1,6 @@
-﻿namespace Backend.Contracts
+﻿using Microsoft.AspNetCore.Http;
+
+namespace Backend.Web.Contracts
 {
     public class ServerCheckinResponse
     {

@@ -1,4 +1,5 @@
 using Backend.Storage;
+using Backend.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
@@ -6,7 +7,7 @@ namespace Backend.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class FileController : ControllerBase
+public class FileController : ControllerBase, IFileController
 {
     private readonly ILogger<FileController> _logger;
     private readonly IWebSocketContainer _webSocketContainer;

@@ -25,7 +25,6 @@ public class WebSocketController : ControllerBase
         if (HttpContext.WebSockets.IsWebSocketRequest)
         {
             var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-            _logger.LogInformation($"Connected WS {webSocket.GetHashCode()}");
 
             var rslt = await webSocket.ReadAsync();
             _logger.LogInformation($"Reviced: {rslt.Message}");
