@@ -8,16 +8,16 @@ public class SocketManager : ISocketManager
 {
     private readonly ILogger<SocketManager> _logger;
     private readonly IEventDispatcher _eventQueueManager;
-    private readonly ISlaveHostStringRetriver _slaveHostStringRetriver;
+    private readonly IHostStringRetriver _hostStringRetriver;
     private readonly HostString _hostString;
     private readonly bool _secure;
 
-    public SocketManager(ILogger<SocketManager> logger, IEventDispatcher eventQueueManager, IConfiguration configuration, ISlaveHostStringRetriver slaveHostStringRetriver)
+    public SocketManager(ILogger<SocketManager> logger, IEventDispatcher eventQueueManager, IConfiguration configuration, IHostStringRetriver slaveHostStringRetriver)
     {
         ArgumentNullException.ThrowIfNull(configuration);
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _eventQueueManager = eventQueueManager ?? throw new ArgumentNullException(nameof(eventQueueManager));
-        _slaveHostStringRetriver = slaveHostStringRetriver ?? throw new ArgumentNullException(nameof(slaveHostStringRetriver));
+        _hostStringRetriver = slaveHostStringRetriver ?? throw new ArgumentNullException(nameof(slaveHostStringRetriver));
 
         _ = bool.TryParse(configuration["UseHttps"], out _secure);
         if (_secure)
@@ -57,7 +57,7 @@ public class SocketManager : ISocketManager
             _logger.LogInformation("connection established to \"{wsuri}\"", wsuri);
 
             await ws.WriteAsync("ping", ct);
-            var hoststrings = string.Join(';', _slaveHostStringRetriver.GetLocalFileServerHosts()); // this is an edge case.. need to handle it later.
+            var hoststrings = string.Join(';', _hostStringRetriver.GetLocalFileServerHosts()); // this is an edge case.. need to handle it later.
             await ws.WriteAsync($"file server hosted at: {hoststrings}", ct);
 
             var (ReciveResult, Message) = await ws.ReadAsync(ct);

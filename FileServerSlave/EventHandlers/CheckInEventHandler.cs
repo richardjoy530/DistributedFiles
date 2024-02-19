@@ -1,4 +1,5 @@
-﻿using FileServerMaster.Web.Controllers;
+﻿using Common;
+using FileServerMaster.Web.Controllers;
 using FileServerSlave.Events;
 using FileServerSlave.Files;
 using FileServerSlave.Interceptor;
@@ -11,15 +12,15 @@ namespace FileServerSlave.EventHandlers
         private readonly ILogger<CheckInEventHandler> _logger;
         private readonly IEventDispatcher _eventDispatcher;
         private readonly ICheckInController _checkInController;
-        private readonly ISlaveHostStringRetriver _slaveHostStringRetriver;
+        private readonly IHostStringRetriver _hostStringRetriver;
         private readonly IFileManager _fileManager;
 
-        public CheckInEventHandler(ILogger<CheckInEventHandler> logger, IEventDispatcher eventDispatcher, IConfiguration configuration, ISlaveHostStringRetriver slaveHostStringRetriver, IFileManager fileManager)
+        public CheckInEventHandler(ILogger<CheckInEventHandler> logger, IEventDispatcher eventDispatcher, IConfiguration configuration, IHostStringRetriver slaveHostStringRetriver, IFileManager fileManager)
         {
             ArgumentNullException.ThrowIfNull(configuration);
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _eventDispatcher = eventDispatcher ?? throw new ArgumentNullException(nameof(eventDispatcher));
-            _slaveHostStringRetriver = slaveHostStringRetriver ?? throw new ArgumentNullException(nameof(slaveHostStringRetriver));
+            _hostStringRetriver = slaveHostStringRetriver ?? throw new ArgumentNullException(nameof(slaveHostStringRetriver));
             _fileManager = fileManager ?? throw new ArgumentNullException(nameof(fileManager));
 
             HostString masterHostString;
@@ -48,7 +49,7 @@ namespace FileServerSlave.EventHandlers
             var req = new FileServerMaster.Web.Contracts.AvailableFiles
             {
                 AvailableFileNames = _fileManager.GetAvailableFilesOnThisServer(),
-                SlaveHostStrings = _slaveHostStringRetriver.GetLocalFileServerHosts().Select(h => h.ToString()).ToArray()
+                SlaveHostStrings = _hostStringRetriver.GetLocalFileServerHosts().Select(h => h.ToString()).ToArray()
             };
 
             // api call to master server

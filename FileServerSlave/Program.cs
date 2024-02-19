@@ -1,3 +1,4 @@
+using Common;
 using FileServerSlave.EventHandlers;
 using FileServerSlave.Events;
 using FileServerSlave.Files;
@@ -25,7 +26,7 @@ public abstract partial class Program
         builder.Services.AddKeyedSingleton<IEventHandler, CheckInEventHandler>(nameof(CheckInEvent));
         builder.Services.AddKeyedSingleton<IEventHandler, DownLoadEventHandler>(nameof(DownloadEvent));
 
-        builder.Services.AddSingleton<ISlaveHostStringRetriver, SlaveHostStringRetriver>();
+        builder.Services.AddSingleton<IHostStringRetriver, HostStringRetriver>();
         builder.Services.AddSingleton<IFileManager, FileManager>();
 
         var app = builder.Build();

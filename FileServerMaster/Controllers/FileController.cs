@@ -16,13 +16,15 @@ public class FileController : ControllerBase, IMasterFileController, IFileContro
     private readonly IWebSocketContainer _webSocketContainer;
     private readonly IFileContainer _fileContainer;
     private readonly IFileDistributorManager _fileDistributorManager;
+    private readonly IHostStringRetriver _hostStringRetriver;
 
-    public FileController(ILogger<FileController> logger, IWebSocketContainer webSocketContainer, IFileContainer fileQueueContainer, IFileDistributorManager fileDistributorManager)
+    public FileController(ILogger<FileController> logger, IWebSocketContainer webSocketContainer, IFileContainer fileQueueContainer, IFileDistributorManager fileDistributorManager, IHostStringRetriver hostStringRetriver)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _webSocketContainer = webSocketContainer ?? throw new ArgumentNullException(nameof(webSocketContainer));
         _fileContainer = fileQueueContainer ?? throw new ArgumentNullException(nameof(fileQueueContainer));
         _fileDistributorManager = fileDistributorManager ?? throw new ArgumentNullException(nameof(fileDistributorManager));
+        _hostStringRetriver = hostStringRetriver ?? throw new ArgumentNullException(nameof(hostStringRetriver));
     }
 
     [HttpPost]
@@ -31,7 +33,8 @@ public class FileController : ControllerBase, IMasterFileController, IFileContro
         _logger.LogInformation("recived file \"{filename}\"", file.FileName);
         _fileContainer.Add(file);
 
-        _fileDistributorManager.UpdateFileAvailablity(Request.Host, [file.FileName]);
+        var masterHost = _hostStringRetriver.GetLocalFileServerHosts().First();
+        _fileDistributorManager.UpdateFileAvailablity(masterHost, [file.FileName]);
         await _webSocketContainer.RequestCheckInAllAsync();
     }
 

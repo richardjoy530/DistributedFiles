@@ -2,15 +2,17 @@
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Hosting.Server;
 using System.Net;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
-namespace FileServerSlave
+namespace Common
 {
-    public class SlaveHostStringRetriver : ISlaveHostStringRetriver
+    public class HostStringRetriver : IHostStringRetriver
     {
         private readonly IServer _server;
-        private readonly ILogger<SlaveHostStringRetriver> _logger;
+        private readonly ILogger<HostStringRetriver> _logger;
 
-        public SlaveHostStringRetriver(IServer server, ILogger<SlaveHostStringRetriver> logger)
+        public HostStringRetriver(IServer server, ILogger<HostStringRetriver> logger)
         {
             _server = server ?? throw new ArgumentNullException(nameof(server));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -18,7 +20,7 @@ namespace FileServerSlave
 
         public HostString[] GetLocalFileServerHosts()
         {
-            var host = Dns.GetHostEntry(Dns.GetHostName()).HostName;
+            var host = Dns.GetHostEntry(Dns.GetHostName()).AddressList[1].MapToIPv4().ToString();
             var ports = _server.Features.Get<IServerAddressesFeature>()!.Addresses.Select(a => new Uri(a).Port).ToArray();
 
             var hoststrings = new HostString[ports.Length];

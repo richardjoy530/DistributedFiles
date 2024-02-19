@@ -1,3 +1,4 @@
+using Common;
 using FileServerMaster.Storage;
 
 namespace FileServerMaster;
@@ -18,6 +19,7 @@ public abstract class Program
         builder.Services.AddSingleton<IFileContainer, FileContainer>();
         builder.Services.AddSingleton<IWebSocketContainer, WebSocketContainer>();
         builder.Services.AddSingleton<IFileDistributorManager, FileDistributorManager>();
+        builder.Services.AddSingleton<IHostStringRetriver, HostStringRetriver>();
 
         var app = builder.Build();
 
