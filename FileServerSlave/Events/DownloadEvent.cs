@@ -5,10 +5,10 @@
         public readonly HostString HostString;
         public readonly string FileName;
 
-        public DownloadEvent(KeyValuePair<string, HostString> filelink)
+        public DownloadEvent(KeyValuePair<string, string> filelink)
         {
             FileName = filelink.Key;
-            HostString = filelink.Value;
+            HostString = new HostString(filelink.Value);
         }
     }
 }

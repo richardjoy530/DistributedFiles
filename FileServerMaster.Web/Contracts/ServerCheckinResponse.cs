@@ -4,6 +4,6 @@ namespace FileServerMaster.Web.Contracts
 {
     public class ServerCheckinResponse
     {
-        public required IDictionary<string, HostString> FileLinks { get; set; }
+        public required IDictionary<string, string> FileLinks { get; set; }
     }
 }

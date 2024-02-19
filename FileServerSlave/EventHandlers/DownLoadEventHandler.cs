@@ -30,6 +30,13 @@ namespace FileServerSlave.EventHandlers
                 return;
             }
 
+            _logger.LogDebug("host for \"{filename}\" is \"{hoststring}\"", de.FileName, de.HostString);
+            if (string.IsNullOrWhiteSpace(de.HostString.ToString()))
+            {
+                _logger.LogError("download host is invalid");
+                return;
+            }
+
             var fileController = ApiInterceptor.GetController<IFileController>(de.HostString, _secure);
 
             var resp = fileController.DownLoadFile(de.FileName);
@@ -43,6 +50,7 @@ namespace FileServerSlave.EventHandlers
                 _fileManager.SaveFile(resp);
             }
 
+            _logger.LogDebug("firing checkin event");
             var ce = new CheckInEvent();
             _eventDispatcher.FireEvent(ce);
         }

@@ -33,7 +33,7 @@ namespace FileServerMaster.Storage
             }
         }
 
-        public async Task RequestCheckinAsync()
+        public async Task RequestCheckInAllAsync()
         {
             await Process(ws =>
             {

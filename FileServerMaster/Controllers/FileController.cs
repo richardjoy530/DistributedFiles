@@ -26,11 +26,11 @@ public class FileController : ControllerBase, IMasterFileController, IFileContro
     [HttpPost]
     public async Task UploadAsync(IFormFile file)
     {
-        _logger.LogInformation($"Recived file {file.FileName}");
+        _logger.LogInformation("recived file \"{filename}\"", file.FileName);
         _fileContainer.Add(file);
 
         _fileDistributorManager.UpdateFileAvailablity(Request.Host, [file.FileName]);
-        await _webSocketContainer.RequestCheckinAsync();
+        await _webSocketContainer.RequestCheckInAllAsync();
     }
 
     [HttpGet("{filename}")]
@@ -39,6 +39,7 @@ public class FileController : ControllerBase, IMasterFileController, IFileContro
         var file = _fileContainer.Get(filename);
         if (file == null)
         {
+            _logger.LogInformation("\"{}\" was not present in the file container", filename);
             Response.StatusCode = (int)HttpStatusCode.NoContent;
             return new FileData
             {
@@ -47,6 +48,7 @@ public class FileController : ControllerBase, IMasterFileController, IFileContro
             };
         }
 
+        _logger.LogInformation("\"{}\" was downloaded", filename);
         Response.ContentType = "image/jpg";
         return new FileData
         {

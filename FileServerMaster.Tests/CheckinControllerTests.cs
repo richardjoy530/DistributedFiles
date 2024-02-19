@@ -1,7 +1,9 @@
+using System.Numerics;
 using FileServerMaster.Controllers;
 using FileServerMaster.Storage;
 using FileServerMaster.Web.Contracts;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace FileServerMaster.Tests
@@ -41,13 +43,13 @@ namespace FileServerMaster.Tests
             Assert.That(resp.FileLinks, Has.Count.EqualTo(retrivalCount));
             foreach (var fileName in resp.FileLinks.Keys)
             {
-                Assert.That(resp.FileLinks[fileName], Is.EqualTo(new HostString("1.1.1.1", 443)));
+                Assert.That(resp.FileLinks[fileName], Is.EqualTo(new HostString("1.1.1.1", 443).ToString()));
             }
         }
 
         private CheckInController GetController()
         {
-            return new CheckInController(_fileDistributorManager!.Object, _fileContainer!.Object);
+            return new CheckInController(_fileDistributorManager!.Object, _fileContainer!.Object, new Mock<ILogger<CheckInController>>().Object);
         }
     }
 }

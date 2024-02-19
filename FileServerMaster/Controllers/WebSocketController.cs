@@ -57,7 +57,7 @@ public class WebSocketController : ControllerBase
     public async Task CheckinAsync()
     {
         _logger.LogInformation("Requesting check-in");
-        await _webSocketContainer.RequestCheckinAsync();
+        await _webSocketContainer.RequestCheckInAllAsync();
     }
 #endif
 

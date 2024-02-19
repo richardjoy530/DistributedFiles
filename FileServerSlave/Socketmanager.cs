@@ -28,6 +28,8 @@ public class SocketManager : ISocketManager
         {
             _hostString = new HostString(configuration["FileServerMasterHttp"]!);
         }
+
+        _logger.LogDebug("configured master host address is \"{host}\"", _hostString);
     }
 
     public async void EstablishConnection(CancellationToken token)
@@ -77,7 +79,7 @@ public class SocketManager : ISocketManager
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex.Message);
+            _logger.LogError(ex.Message);
             _logger.LogTrace(new EventId(1), ex, ex.Message);
         }
         finally
@@ -90,7 +92,7 @@ public class SocketManager : ISocketManager
 
     private void HandleMessage(string message)
     {
-        if (message.Contains("checkin"))
+        if (message.Contains("checkin") || message.Contains("pong"))
         {
             var checkinEvent = new CheckInEvent();
             _eventQueueManager.FireEvent(checkinEvent);

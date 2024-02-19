@@ -2,6 +2,7 @@
 using FileServerSlave.Events;
 using FileServerSlave.Files;
 using FileServerSlave.Interceptor;
+using Microsoft.AspNetCore.Http;
 
 namespace FileServerSlave.EventHandlers
 {
@@ -32,6 +33,7 @@ namespace FileServerSlave.EventHandlers
                 masterHostString = new HostString(configuration["FileServerMasterHttp"]!);
             }
 
+            _logger.LogDebug("configured master host address is \"{host}\"", masterHostString);
             _checkInController = ApiInterceptor.GetController<ICheckInController>(masterHostString, secure);
         }
 
@@ -59,6 +61,7 @@ namespace FileServerSlave.EventHandlers
             }
 
             // fetch only the first one. this logic need's to be refined.
+            _logger.LogDebug("firing checkin event");
             var downLoadEvent = new DownloadEvent(resp.FileLinks.First());
             _eventDispatcher.FireEvent(downLoadEvent);
         }

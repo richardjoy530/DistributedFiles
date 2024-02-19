@@ -18,12 +18,13 @@
 
         public void Add(IFormFile formFile)
         {
-            _logger.LogInformation($"Adding: {formFile.FileName}");
+            _logger.LogDebug("adding \"{filename}\" to file container", formFile.FileName);
             _files.Add(formFile);
         }
 
         public void DiscardFiles(string[] filesToRemoveFromContainer)
         {
+            _logger.LogDebug("discarding \"{files}\" from file container", string.Join(',', filesToRemoveFromContainer));
             _files.RemoveAll(f => filesToRemoveFromContainer.Contains(f.FileName));
         }
 
