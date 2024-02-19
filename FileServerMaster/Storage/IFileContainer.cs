@@ -1,4 +1,6 @@
 ﻿
+using Common.Proxy.Controllers;
+
 namespace FileServerMaster.Storage
 {
     public interface IFileContainer
@@ -7,7 +9,7 @@ namespace FileServerMaster.Storage
 
         void DiscardFiles(string[] filesToRemoveFromContainer);
 
-        IFormFile? Get(string filename);
+        FileData? Get(string filename);
 
         IEnumerable<string> GetTempFileNames();
     }

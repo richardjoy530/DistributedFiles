@@ -1,3 +1,4 @@
+using Common;
 using Common.Proxy.Controllers;
 using FileServerMaster.Storage;
 using FileServerMaster.Web.Controllers;
@@ -44,36 +45,11 @@ public class FileController : ControllerBase, IMasterFileController, IFileContro
             return new FileData
             {
                 FileName = string.Empty,
-                Content = []
+                ContentBase64 = string.Empty
             };
         }
 
         _logger.LogInformation("\"{}\" was downloaded", filename);
-        Response.ContentType = "image/jpg";
-        return new FileData
-        {
-            FileName = filename,
-            Content = GetBytes(file.OpenReadStream())
-        };
-    }
-
-    private static byte[] GetBytes(Stream stream)
-    {
-        var streamLength = (int)stream.Length; // total number of bytes read
-        var numBytesReadPosition = 0; // actual number of bytes read
-        var fileInBytes = new byte[streamLength];
-
-        while (streamLength > 0)
-        {
-            // Read may return anything from 0 to numBytesToRead.
-            var n = stream.Read(fileInBytes, numBytesReadPosition, streamLength);
-            // Break when the end of the file is reached.
-            if (n == 0)
-                break;
-            numBytesReadPosition += n;
-            streamLength -= n;
-        }
-
-        return fileInBytes;
+        return file;
     }
 }

@@ -6,7 +6,7 @@ namespace FileServerSlave.Files
     {
         string[] GetAvailableFilesOnThisServer();
 
-        byte[] GetFile(string filename);
+        FileData? GetFile(string filename);
 
         Task SaveFile(FileData file);
     }

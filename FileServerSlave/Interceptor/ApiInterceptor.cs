@@ -1,4 +1,5 @@
 ﻿using Castle.DynamicProxy;
+using Newtonsoft.Json;
 
 namespace FileServerSlave.Interceptor
 {
@@ -26,7 +27,7 @@ namespace FileServerSlave.Interceptor
 
             if (!responseMessage.IsSuccessStatusCode)
             {
-                throw new InvalidDataException(responseMessage.ReasonPhrase);
+                throw new Exception(JsonConvert.SerializeObject(responseMessage));
             }
 
             var returnValue = HttpUtils.Deserialize(invocation.Method.ReturnType, responseMessage);

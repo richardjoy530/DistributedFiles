@@ -1,4 +1,5 @@
-﻿using Common.Proxy.Controllers;
+﻿using Common;
+using Common.Proxy.Controllers;
 
 namespace FileServerSlave.Files
 {
@@ -20,24 +21,25 @@ namespace FileServerSlave.Files
                 Directory.CreateDirectory(_distributedFolder);
             }
 
-            return Directory.EnumerateFiles(_distributedFolder).ToArray();
+            return Directory.EnumerateFiles(_distributedFolder).Select(f => f.Split('\\').Last()).ToArray();
         }
 
-        public byte[] GetFile(string filename)
+        public FileData? GetFile(string filename)
         {
             var filePath = Path.Combine(_distributedFolder, filename);
             if (File.Exists(filePath))
             {
-                var stream = System.IO.File.OpenRead(filePath);
-                return GetBytes(stream);
+                var stream = File.OpenRead(filePath);
+                var filedata = new FileData { ContentBase64 = stream.GetBytes(), FileName = filename };
+                return filedata;
             }
 
-            return [];
+            return null;
         }
 
         public async Task SaveFile(FileData file)
         {
-            using var stream = new MemoryStream(file.Content);
+            using var stream = new MemoryStream(file.ContentBase64.Base64Decode());
 
             if (!Directory.Exists(_distributedFolder))
             {
@@ -46,26 +48,6 @@ namespace FileServerSlave.Files
 
             using var fileStream = new FileStream(Path.Combine(_distributedFolder, file.FileName), FileMode.Create);
             await stream.CopyToAsync(fileStream);
-        }
-
-        private static byte[] GetBytes(Stream stream)
-        {
-            var streamLength = (int)stream.Length; // total number of bytes read
-            var numBytesReadPosition = 0; // actual number of bytes read
-            var fileInBytes = new byte[streamLength];
-
-            while (streamLength > 0)
-            {
-                // Read may return anything from 0 to numBytesToRead.
-                var n = stream.Read(fileInBytes, numBytesReadPosition, streamLength);
-                // Break when the end of the file is reached.
-                if (n == 0)
-                    break;
-                numBytesReadPosition += n;
-                streamLength -= n;
-            }
-
-            return fileInBytes;
         }
     }
 }

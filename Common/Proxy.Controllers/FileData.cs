@@ -10,6 +10,6 @@ namespace Common.Proxy.Controllers
     {
         public required string FileName { get; set; }
 
-        public required byte[] Content { get; set; }
+        public required string ContentBase64 { get; set; }
     }
 }
