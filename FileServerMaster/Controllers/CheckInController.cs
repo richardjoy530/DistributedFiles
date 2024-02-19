@@ -23,9 +23,22 @@ namespace FileServerMaster.Controllers
         [HttpPost]
         public ServerCheckinResponse CheckIn(AvailableFiles request)
         {
-            // discarding files saved in the container when its already in the file-server
-            var containerFiles = _fileContainer.GetTempFileNames().ToArray();
-            var intersection = containerFiles.Intersect(request.AvailableFileNames).ToArray();
+            /*
+             * Check-In Sequence
+             * 
+             * 1. Remove the file from the file-container if you find it in any slave-servers.
+             * 
+             * 2. Update the availablity table with file-remotehost map.
+             * 
+             * 3. Get the list of files that are not in the availability table.
+             *      all files from availablity table - slave files => files-to-be-retrived
+             *      
+             * 4. Get the file-host map for the files-to-be-retrived
+             */
+
+            // 1
+            var containerfiles = _fileContainer.GetTempFileNames();
+            var intersection = containerfiles.Intersect(request.AvailableFileNames).ToArray();
 
             if (intersection.Length != 0)
             {
@@ -33,11 +46,14 @@ namespace FileServerMaster.Controllers
             }
 
             _logger.LogDebug("local file server addresses are \"{addresses}\"", string.Join(';', request.SlaveHostStrings));
-            foreach (var hostString in request.SlaveHostStrings) // usually this will be just 1 or 2 loop
-            {
-                _fileDistributorManager.RemoveHost(new HostString(hostString)); // todo .. there is some problem here.
-            }
+            
+            // this was writen by me. i forgot why even i made this removal. can't reason out why.
+            //foreach (var hostString in request.SlaveHostStrings) // usually this will be just 1 or 2 loop
+            //{
+            //    _fileDistributorManager.RemoveHost(new HostString(hostString)); // todo .. there is some problem here.
+            //}
 
+            // 2.
             if (request.AvailableFileNames.Length != 0)
             {
                 foreach (var hostString in request.SlaveHostStrings) // usually this will be just 1 or 2 loop
@@ -47,8 +63,11 @@ namespace FileServerMaster.Controllers
                 }
             }
 
+            // 3
             var filesToRetrive = _fileDistributorManager.GetAllFileNames().ToList();
-            filesToRetrive.RemoveAll(f => intersection.Contains(f));
+            filesToRetrive.RemoveAll(f => request.AvailableFileNames.Contains(f));
+
+            // 4
             var retrievalLinks = filesToRetrive.ToDictionary(f => f, f => _fileDistributorManager.GetRetrivalHost(f).ToString());
 
             return new ServerCheckinResponse { FileLinks = retrievalLinks };

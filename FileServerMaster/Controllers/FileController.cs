@@ -4,6 +4,7 @@ using FileServerMaster.Storage;
 using FileServerMaster.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Web;
 
 namespace FileServerMaster.Controllers;
 
@@ -35,18 +36,14 @@ public class FileController : ControllerBase, IMasterFileController, IFileContro
     }
 
     [HttpGet("{filename}")]
-    public FileData DownLoadFile(string filename)
+    public FileData? DownLoadFile(string filename)
     {
+        filename = HttpUtility.UrlDecode(filename);
         var file = _fileContainer.Get(filename);
         if (file == null)
         {
             _logger.LogInformation("\"{}\" was not present in the file container", filename);
-            Response.StatusCode = (int)HttpStatusCode.NoContent;
-            return new FileData
-            {
-                FileName = string.Empty,
-                ContentBase64 = string.Empty
-            };
+            return null;
         }
 
         _logger.LogInformation("\"{}\" was downloaded", filename);

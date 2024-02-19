@@ -26,12 +26,12 @@ namespace Common
 
         public static string Base64Encode(this byte[] bytes)
         {
-            return Encoding.UTF8.GetString(bytes);
+            return Encoding.Unicode.GetString(bytes);
         }
 
         public static byte[] Base64Decode(this string base64string)
         {
-            return Encoding.UTF8.GetBytes(base64string);
+            return Encoding.Unicode.GetBytes(base64string);
         }
     }
 }

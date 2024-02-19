@@ -29,6 +29,8 @@ namespace FileServerMaster.Storage
                 ContentBase64 = formFile.OpenReadStream().GetBytes()
             };
             _files.Add(filedata);
+
+            _logger.LogDebug("added \"{filename}\" to file container", formFile.FileName);
         }
 
         public void DiscardFiles(string[] filesToRemoveFromContainer)
