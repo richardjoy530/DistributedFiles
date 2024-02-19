@@ -7,3 +7,4 @@ riderModule.iml
 .idea/
 *.csproj.user
 *.slnLaunch.user
+/launchSettings.json
