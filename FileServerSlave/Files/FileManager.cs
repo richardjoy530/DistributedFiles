@@ -7,11 +7,11 @@ namespace FileServerSlave.Files
     {
         private readonly string _distributedFolder;
 
-        public FileManager(IConfiguration configuration)
+        public FileManager(IDestinationLocator locator)
         {
-            ArgumentNullException.ThrowIfNull(configuration);
+            ArgumentNullException.ThrowIfNull(locator);
 
-            _distributedFolder = configuration["DistributedFolder"]!;
+            _distributedFolder = locator.GetDestinationFolderPath();
         }
 
         public string[] GetAvailableFilesOnThisServer()

@@ -31,6 +31,7 @@ public abstract partial class Program
 
         builder.Services.AddSingleton<IHostStringRetriver, HostStringRetriver>();
         builder.Services.AddSingleton<IFileManager, FileManager>();
+        builder.Services.AddSingleton<IDestinationLocator, DestinationLocator>();
 
         var app = builder.Build();
 
@@ -45,6 +46,11 @@ public abstract partial class Program
             app.UseHttpsRedirection();
         }
 
+        if (args.Contains("--save"))
+        {
+            var saveLocation = args[args.ToList().IndexOf("--save") + 1];
+            app.Services.GetRequiredService<IDestinationLocator>().SetCustomLocation(saveLocation);
+        }
         var sm = app.Services.GetRequiredService<ISocketManager>();
         sm.EstablishConnection(cts.Token);
 
