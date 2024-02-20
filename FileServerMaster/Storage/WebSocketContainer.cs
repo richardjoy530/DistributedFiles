@@ -32,15 +32,6 @@ namespace FileServerMaster.Storage
             }
         }
 
-        public async Task CloseWebSocketAsync()
-        {
-            await Process(ws =>
-            {
-                _logger.LogInformation($"Closing WS: {ws.GetHashCode}"); // use events
-                return ws.Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None).ContinueWith((_) => new Task(ws.Socket.Dispose));
-            });
-        }
-
         public async Task Process(Func<(HostString Host, WebSocket Socket), Task> excecuter)
         {
 

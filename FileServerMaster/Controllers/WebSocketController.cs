@@ -69,11 +69,4 @@ public class WebSocketController : ControllerBase
         await _eventDispatcher.FireEvent(new RequestCheckInEvent());
     }
 #endif
-
-    [HttpDelete]
-    public async Task CloseAllAsync()
-    {
-        _logger.LogInformation("Closing all WebSockets");
-        await _webSocketContainer.CloseWebSocketAsync(); // todo use event dispatcher
-    }
 }
