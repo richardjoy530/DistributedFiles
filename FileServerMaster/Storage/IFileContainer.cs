@@ -5,7 +5,7 @@ namespace FileServerMaster.Storage
 {
     public interface IFileContainer
     {
-        void Add(IFormFile formFile);
+        bool Add(IFormFile formFile);
 
         void DiscardFiles(string[] filesToRemoveFromContainer);
 
