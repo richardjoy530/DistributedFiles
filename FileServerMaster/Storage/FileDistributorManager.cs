@@ -29,11 +29,14 @@ namespace FileServerMaster.Storage
         {
             if (_availablityTable.TryGetValue(fileName, out var hosts))
             {
-                var host = hosts.Dequeue();
-                hosts.Enqueue(host);
-                _logger.LogInformation("[AvailablityTable] host for \"{fileName}\" is \"{host}\"", fileName, host);
+                lock (this)
+                {
+                    hosts.Enqueue(hosts.Dequeue());
+                }
+
+                _logger.LogInformation("[AvailablityTable] host for \"{fileName}\" is \"{host}\"", fileName, hosts.Peek());
                 LogAvailablityTable();
-                return host;
+                return hosts.Peek();
             }
 
             _logger.LogError("\"{}\" does not exist in the file availablity table", fileName);
