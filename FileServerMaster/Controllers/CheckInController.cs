@@ -39,11 +39,11 @@ namespace FileServerMaster.Controllers
              * 
              * 1. Remove the file from the file-container if you find it in any slave-servers.
              *      container files - slave files
-             *
-             * 2. Request check-in if there are any file new files
-             *      if any in slave files that are not in availablity table
              * 
-             * 3. Update the availablity table with file-remotehost map.
+             * 2. Update the availablity table with file-remotehost map.
+             *
+             * 3. Request check-in if there are any file new files
+             *      if any in slave files that are not in availablity table
              * 
              * 4. Get files that are not in the slave files.
              *      all files from availablity table - slave files => files-to-be-retrived
@@ -57,14 +57,6 @@ namespace FileServerMaster.Controllers
             _fileContainer.DiscardFiles(request.AvailableFileNames);
 
             // 2
-            var allFilesInTable = _fileDistributorManager.GetAllFileNames();
-            if (request.AvailableFileNames.Any(sf => !allFilesInTable.Contains(sf)))
-            {
-                // requesting checking to all slaves except this one
-                _eventDispatcher.FireEvent(new RequestCheckInEvent([new HostString(request.SlaveHostStrings.First())], true));
-            }
-
-            // 3
             if (request.AvailableFileNames.Length != 0)
             {
                 foreach (var hostString in request.SlaveHostStrings) // usually this will be just 1 or 2 loop
@@ -72,6 +64,14 @@ namespace FileServerMaster.Controllers
                     // updating the file availability table
                     _fileDistributorManager.UpdateFileAvailablity(new HostString(hostString), request.AvailableFileNames);
                 }
+            }
+
+            // 3
+            var allFilesInTable = _fileDistributorManager.GetAllFileNames();
+            if (request.AvailableFileNames.Any(sf => !allFilesInTable.Contains(sf)))
+            {
+                // requesting checking to all slaves except this one
+                _eventDispatcher.FireEvent(new RequestCheckInEvent([new HostString(request.SlaveHostStrings.First())], true));
             }
 
             // 4
