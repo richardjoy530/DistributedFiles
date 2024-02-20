@@ -1,20 +1,18 @@
 ﻿using System.Collections.Concurrent;
 using Common;
-using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json;
 
 namespace FileServerMaster.Storage
 {
     public class FileDistributorManager : IFileDistributorManager
     {
-        private readonly ConcurrentDictionary<string, Queue<HostString>> _availablityTable;
+        private readonly ConcurrentDictionary<string, ConcurrentQueue<HostString>> _availablityTable;
         private readonly ILogger<FileDistributorManager> _logger;
         private readonly IWebHostEnvironment _environment;
         private readonly IHostStringRetriver _hostStringRetriver;
 
         public FileDistributorManager(ILogger<FileDistributorManager> logger, IWebHostEnvironment environment, IHostStringRetriver hostStringRetriver)
         {
-            _availablityTable = new ConcurrentDictionary<string, Queue<HostString>>();
+            _availablityTable = new ConcurrentDictionary<string, ConcurrentQueue<HostString>>();
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _environment = environment ?? throw new ArgumentNullException(nameof(environment));
             _hostStringRetriver = hostStringRetriver ?? throw new ArgumentNullException(nameof(hostStringRetriver));
@@ -29,14 +27,12 @@ namespace FileServerMaster.Storage
         {
             if (_availablityTable.TryGetValue(fileName, out var hosts))
             {
-                lock (this)
-                {
-                    hosts.Enqueue(hosts.Dequeue());
-                }
+                hosts.TryDequeue(out var host);
+                hosts.Enqueue(host);
 
-                _logger.LogInformation("[AvailablityTable] host for \"{fileName}\" is \"{host}\"", fileName, hosts.Peek());
+                _logger.LogInformation("[AvailablityTable] host for \"{fileName}\" is \"{host}\"", fileName, host);
                 LogAvailablityTable();
-                return hosts.Peek();
+                return host;
             }
 
             _logger.LogError("\"{}\" does not exist in the file availablity table", fileName);
@@ -52,7 +48,7 @@ namespace FileServerMaster.Storage
             {
                 for (int i = 0; i < hostStrings.Count; i++)
                 {
-                    var temp = hostStrings.Dequeue();
+                    hostStrings.TryDequeue(out var temp);
                     if (temp == masterHost)
                     {
                         LogAvailablityTable();
@@ -79,7 +75,7 @@ namespace FileServerMaster.Storage
                 }
                 else
                 {
-                    hosts = new Queue<HostString>();
+                    hosts = new ConcurrentQueue<HostString>();
                     hosts.Enqueue(host);
                     _logger.LogInformation("[AvailablityTable] \"{file}\" hosted by \"{host}\"", fileName, host);
                     _availablityTable.TryAdd(fileName, hosts);
