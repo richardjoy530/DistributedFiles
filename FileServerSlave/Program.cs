@@ -18,7 +18,7 @@ public abstract partial class Program
         builder.Logging.AddSimpleConsole( o =>
         {
             o.SingleLine = true;
-            o.TimestampFormat = "HH:mm:ss ";
+            o.TimestampFormat = "HH:mm:ss:ffff ";
         });
 
         // Add services to the container.

@@ -27,8 +27,12 @@ namespace FileServerMaster.Storage
         {
             if (_availablityTable.TryGetValue(fileName, out var hosts))
             {
-                hosts.TryDequeue(out var host);
-                hosts.Enqueue(host);
+                HostString host;
+                lock (new object())
+                {
+                    hosts.TryDequeue(out host);
+                    hosts.Enqueue(host);
+                }
 
                 _logger.LogInformation("[AvailablityTable] host for \"{fileName}\" is \"{host}\"", fileName, host);
                 LogAvailablityTable();
