@@ -1,6 +1,4 @@
-﻿using FileServerSlave.Events;
-
-namespace FileServerSlave.EventHandlers
+﻿namespace Common.Events
 {
     public interface IEventHandlerResolver
     {

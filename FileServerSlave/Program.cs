@@ -1,4 +1,5 @@
 using Common;
+using Common.Events;
 using FileServerSlave.EventHandlers;
 using FileServerSlave.Events;
 using FileServerSlave.Files;

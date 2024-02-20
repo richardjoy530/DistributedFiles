@@ -1,4 +1,5 @@
 using Common;
+using Common.Events;
 using FileServerSlave.Events;
 using System.Net.WebSockets;
 
@@ -7,7 +8,7 @@ namespace FileServerSlave;
 public class SocketManager : ISocketManager
 {
     private readonly ILogger<SocketManager> _logger;
-    private readonly IEventDispatcher _eventQueueManager;
+    private readonly IEventDispatcher _eventDispatcher;
     private readonly IHostStringRetriver _hostStringRetriver;
     private readonly HostString _hostString;
     private readonly bool _secure;
@@ -16,7 +17,7 @@ public class SocketManager : ISocketManager
     {
         ArgumentNullException.ThrowIfNull(configuration);
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _eventQueueManager = eventQueueManager ?? throw new ArgumentNullException(nameof(eventQueueManager));
+        _eventDispatcher = eventQueueManager ?? throw new ArgumentNullException(nameof(eventQueueManager));
         _hostStringRetriver = slaveHostStringRetriver ?? throw new ArgumentNullException(nameof(slaveHostStringRetriver));
 
         _ = bool.TryParse(configuration["UseHttps"], out _secure);
@@ -34,11 +35,12 @@ public class SocketManager : ISocketManager
 
     public async void EstablishConnection(CancellationToken token)
     {
+        await Task.Delay(1000 * 5);
         do
         {
             await Listen(token);
             _logger.LogInformation("trying to reconnect after 30 seconds");
-            Thread.Sleep(1000 * 30); // wait for 30 seconds
+            Thread.Sleep(1000 * 5); // wait for 5 seconds
         } while (true);
     }
 
@@ -58,7 +60,7 @@ public class SocketManager : ISocketManager
 
             await ws.WriteAsync("ping", ct);
             var hoststrings = string.Join(';', _hostStringRetriver.GetLocalFileServerHosts()); // this is an edge case.. need to handle it later.
-            await ws.WriteAsync($"file server hosted at: {hoststrings}", ct);
+            await ws.WriteAsync($"slave server hosted at: \"{hoststrings}\"", ct);
 
             var (ReciveResult, Message) = await ws.ReadAsync(ct);
             while (!ReciveResult.CloseStatus.HasValue)
@@ -90,12 +92,12 @@ public class SocketManager : ISocketManager
         }
     }
 
-    private void HandleMessage(string message)
+    private async void HandleMessage(string message)
     {
         if (message.Contains("checkin") || message.Contains("pong"))
         {
             var checkinEvent = new CheckInEvent();
-            _eventQueueManager.FireEvent(checkinEvent);
+            await _eventDispatcher.FireEvent(checkinEvent);
         }
     }
 }

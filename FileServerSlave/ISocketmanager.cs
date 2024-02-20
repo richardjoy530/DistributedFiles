@@ -1,5 +1,4 @@
-﻿
-namespace FileServerSlave
+﻿namespace FileServerSlave
 {
     public interface ISocketManager
     {

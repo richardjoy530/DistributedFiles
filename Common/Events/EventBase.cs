@@ -1,4 +1,4 @@
-﻿namespace FileServerSlave.Events
+﻿namespace Common.Events
 {
     public abstract class EventBase
     {

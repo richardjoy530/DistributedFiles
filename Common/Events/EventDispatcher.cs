@@ -1,6 +1,7 @@
-﻿using FileServerSlave.EventHandlers;
+﻿using Microsoft.Extensions.Logging;
 
-namespace FileServerSlave.Events
+namespace Common.Events
+
 {
     public class EventDispatcher : IEventDispatcher
     {
@@ -13,9 +14,9 @@ namespace FileServerSlave.Events
             _eventHandlerResolver = eventHandlerResolver ?? throw new ArgumentNullException(nameof(eventHandlerResolver));
         }
 
-        public void FireEvent(EventBase e)
+        public async Task FireEvent(EventBase e)
         {
-            _eventHandlerResolver
+           await  _eventHandlerResolver
                 .ResolveHandlerFor(e)
                 .HandleEvent(e);
         }

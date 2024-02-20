@@ -6,8 +6,8 @@ namespace FileServerMaster.Storage
     {
         Task Listen(WebSocket webSocket);
 
-        Task RequestCheckInAllAsync();
-
         Task CloseWebSocketAsync();
+
+        Task Process(Func<(HostString Host, WebSocket Socket), Task> excecuter);
     }
 }

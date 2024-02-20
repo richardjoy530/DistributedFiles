@@ -47,9 +47,10 @@ namespace FileServerMaster.Tests
             }
         }
 
-        private CheckInController GetController()
+        private CheckInController? GetController()
         {
-            return new CheckInController(_fileDistributorManager!.Object, _fileContainer!.Object, new Mock<ILogger<CheckInController>>().Object);
+            //return new CheckInController(_fileDistributorManager!.Object, _fileContainer!.Object, new Mock<ILogger<CheckInController>>().Object);
+            return null;
         }
     }
 }

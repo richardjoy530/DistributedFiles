@@ -33,10 +33,9 @@ namespace FileServerMaster.Storage
             _logger.LogDebug("added \"{filename}\" to file container", formFile.FileName);
         }
 
-        public void DiscardFiles(string[] filesToRemoveFromContainer)
+        public void DiscardFiles(string[] slaveFileNames)
         {
-            _logger.LogDebug("discarding \"{files}\" from file container", string.Join(',', filesToRemoveFromContainer));
-            _files.RemoveAll(f => filesToRemoveFromContainer.Contains(f.FileName));
+            _files.RemoveAll(f => slaveFileNames.Contains(f.FileName));
         }
 
         public IEnumerable<string> GetTempFileNames()

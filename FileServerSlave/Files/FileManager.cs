@@ -29,7 +29,7 @@ namespace FileServerSlave.Files
             var filePath = Path.Combine(_distributedFolder, filename);
             if (File.Exists(filePath))
             {
-                var stream = File.OpenRead(filePath);
+                using var stream = File.OpenRead(filePath);
                 var filedata = new FileData { ContentBase64 = stream.GetBytes(), FileName = filename };
                 return filedata;
             }

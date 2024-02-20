@@ -1,4 +1,5 @@
-﻿using Common.Proxy.Controllers;
+﻿using Common.Events;
+using Common.Proxy.Controllers;
 using FileServerSlave.Events;
 using FileServerSlave.Files;
 using FileServerSlave.Interceptor;
@@ -22,7 +23,7 @@ namespace FileServerSlave.EventHandlers
             _ = bool.TryParse(configuration["UseHttps"], out _secure);
         }
 
-        public void HandleEvent(EventBase e)
+        public async Task HandleEvent(EventBase e)
         {
             if (e is not DownloadEvent de)
             {
@@ -37,22 +38,31 @@ namespace FileServerSlave.EventHandlers
                 return;
             }
 
+
             var fileController = ApiInterceptor.GetController<IFileController>(de.HostString, _secure);
 
-            var resp = fileController.DownLoadFile(de.FileName);
-
-            if (resp is null)
+            try
             {
-                _logger.LogWarning("download \"{}\" from \"{HostString}\" returned null", de.FileName, de.HostString);
-            }
-            else
-            {
-                _fileManager.SaveFile(resp);
-            }
+                var resp = fileController.DownLoadFile(de.FileName);
 
-            _logger.LogDebug("firing checkin event");
-            var ce = new CheckInEvent();
-            _eventDispatcher.FireEvent(ce);
+                if (resp is null)
+                {
+                    _logger.LogWarning("download \"{}\" from \"{HostString}\" returned null", de.FileName, de.HostString);
+                }
+                else
+                {
+                    await _fileManager.SaveFile(resp);
+                }
+
+                _logger.LogDebug("firing checkin event");
+                var ce = new CheckInEvent();
+                await _eventDispatcher.FireEvent(ce);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                _logger.LogTrace(new EventId(0), ex, ex.Message);
+            }
         }
     }
 }

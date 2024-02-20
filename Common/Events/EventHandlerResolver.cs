@@ -1,6 +1,8 @@
-﻿using FileServerSlave.Events;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
-namespace FileServerSlave.EventHandlers
+namespace Common.Events
+
 {
     public class EventHandlerResolver : IEventHandlerResolver
     {

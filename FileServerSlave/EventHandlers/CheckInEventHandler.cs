@@ -1,9 +1,9 @@
 ﻿using Common;
+using Common.Events;
 using FileServerMaster.Web.Controllers;
 using FileServerSlave.Events;
 using FileServerSlave.Files;
 using FileServerSlave.Interceptor;
-using Microsoft.AspNetCore.Http;
 
 namespace FileServerSlave.EventHandlers
 {
@@ -38,7 +38,7 @@ namespace FileServerSlave.EventHandlers
             _checkInController = ApiInterceptor.GetController<ICheckInController>(masterHostString, secure);
         }
 
-        public void HandleEvent(EventBase e)
+        public async Task HandleEvent(EventBase e)
         {
             if (e is not CheckInEvent _)
             {
@@ -52,19 +52,27 @@ namespace FileServerSlave.EventHandlers
                 SlaveHostStrings = _hostStringRetriver.GetLocalFileServerHosts().Select(h => h.ToString()).ToArray()
             };
 
-            // api call to master server
-            var resp = _checkInController.CheckIn(req);
-            _logger.LogInformation("handled checkin event");
-
-            if (resp.FileLinks.Count == 0)
+            try
             {
-                return;
-            }
+                // api call to master server
+                var resp = _checkInController.CheckIn(req);
+                _logger.LogInformation("handled checkin event");
 
-            // fetch only the first one. this logic need's to be refined.
-            _logger.LogDebug("firing checkin event");
-            var downLoadEvent = new DownloadEvent(resp.FileLinks.First());
-            _eventDispatcher.FireEvent(downLoadEvent);
+                if (resp.FileLinks.Count == 0)
+                {
+                    return;
+                }
+
+                // fetch only the first one. this logic need's to be refined.
+                _logger.LogDebug("firing checkin event");
+                var downLoadEvent = new DownloadEvent(resp.FileLinks.First());
+                await _eventDispatcher.FireEvent(downLoadEvent);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                _logger.LogTrace(new EventId(0), ex, ex.Message);
+            }
         }
     }
 }

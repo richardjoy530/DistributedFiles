@@ -1,4 +1,6 @@
-﻿namespace FileServerSlave.Events
+﻿using Common.Events;
+
+namespace FileServerSlave.Events
 {
     public class DownloadEvent : EventBase
     {

@@ -1,4 +1,7 @@
 using Common;
+using Common.Events;
+using FileServerMaster.EventHandlers;
+using FileServerMaster.Events;
 using FileServerMaster.Storage;
 
 namespace FileServerMaster;
@@ -20,6 +23,11 @@ public abstract class Program
         builder.Services.AddSingleton<IWebSocketContainer, WebSocketContainer>();
         builder.Services.AddSingleton<IFileDistributorManager, FileDistributorManager>();
         builder.Services.AddSingleton<IHostStringRetriver, HostStringRetriver>();
+
+        builder.Services.AddSingleton<IEventDispatcher, EventDispatcher>();
+        builder.Services.AddSingleton<IEventHandlerResolver, EventHandlerResolver>();
+
+        builder.Services.AddKeyedSingleton<IEventHandler, RequestCheckInEventHandler>(nameof(RequestCheckInEvent));
 
         var app = builder.Build();
 
