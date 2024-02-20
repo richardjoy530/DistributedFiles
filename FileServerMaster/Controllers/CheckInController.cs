@@ -57,6 +57,7 @@ namespace FileServerMaster.Controllers
             _fileContainer.DiscardFiles(request.AvailableFileNames);
 
             // 2
+            var tablefilesold = _fileDistributorManager.GetAllFileNames(); // if we update the file table in #2, then #4 will never run
             if (request.AvailableFileNames.Length != 0)
             {
                 foreach (var hostString in request.SlaveHostStrings) // usually this will be just 1 or 2 loop
@@ -67,8 +68,7 @@ namespace FileServerMaster.Controllers
             }
 
             // 3
-            var allFilesInTable = _fileDistributorManager.GetAllFileNames();
-            if (request.AvailableFileNames.Any(sf => !allFilesInTable.Contains(sf)))
+            if (request.AvailableFileNames.Any(sf => !tablefilesold.Contains(sf)))
             {
                 // requesting checking to all slaves except this one
                 _eventDispatcher.FireEvent(new RequestCheckInEvent([new HostString(request.SlaveHostStrings.First())], true));
