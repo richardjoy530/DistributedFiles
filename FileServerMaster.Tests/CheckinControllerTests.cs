@@ -28,7 +28,6 @@ namespace FileServerMaster.Tests
             _fileDistributorManager = new Mock<IFileDistributorManager>();
             _fileDistributorManager.Setup(i => i.UpdateFileAvailablity(new HostString("1.1.1.1", 443), remoteFiles));
             _fileDistributorManager.Setup(i => i.GetAllFileNames()).Returns(totalFiles);
-            _fileDistributorManager.Setup(i => i.RemoveHost(new HostString("1.1.1.1", 443)));
 
             foreach (var fileName in totalFiles)
             {

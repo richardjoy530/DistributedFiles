@@ -41,6 +41,7 @@ namespace FileServerMaster.Controllers
              *      container files - slave files
              *
              * 2. Request check-in if there are any file new files
+             *      if any in slave files that are not in availablity table
              * 
              * 3. Update the availablity table with file-remotehost map.
              * 
@@ -50,15 +51,14 @@ namespace FileServerMaster.Controllers
              * 5. Get the file-host map for the files-to-be-retrived
              *      
              */
+            _logger.LogInformation("[CheckIn] checked-in slave server addresse(s) are \"{addresses}\"", string.Join(';', request.SlaveHostStrings));
 
             // 1
             _fileContainer.DiscardFiles(request.AvailableFileNames);
-            
-
-            _logger.LogDebug("checked-in slave server addresse(s) are \"{addresses}\"", string.Join(';', request.SlaveHostStrings));
 
             // 2
-            if (request.AvailableFileNames.Any(sf => _fileDistributorManager.GetAllFileNames().Contains(sf)))
+            var allFilesInTable = _fileDistributorManager.GetAllFileNames();
+            if (request.AvailableFileNames.Any(sf => !allFilesInTable.Contains(sf)))
             {
                 // requesting checking to all slaves except this one
                 _eventDispatcher.FireEvent(new RequestCheckInEvent([new HostString(request.SlaveHostStrings.First())], true));

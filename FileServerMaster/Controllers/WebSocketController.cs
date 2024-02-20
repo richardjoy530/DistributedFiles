@@ -31,9 +31,13 @@ public class WebSocketController : ControllerBase
     {
         if (HttpContext.WebSockets.IsWebSocketRequest)
         {
+            var ip = HttpContext.Connection.RemoteIpAddress!.MapToIPv4().ToString();
+            var socketHost = new HostString(ip, HttpContext.Connection.RemotePort);
             using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+            _logger.LogInformation("[Connection] accepted connection from \"{host}\"", socketHost); // this is not the slave file-server's host address
+
             var (_, Message) = await webSocket.ReadAsync();
-            _logger.LogInformation("recived message: \"{Message}\"", Message);
+            _logger.LogInformation("[Message] received message: \"{Message}\"", Message);
             await webSocket.WriteAsync("pong");
 
             try
@@ -42,15 +46,14 @@ public class WebSocketController : ControllerBase
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex.Message);
+                _logger.LogError(ex.Message);
                 _logger.LogTrace(new EventId(0), ex, ex.Message);
             }
             finally
             {
                 // need to come up with an idea to remove this server's file host from the availablity table.
-                _logger.LogInformation("disposing connection");
                 webSocket?.Dispose();
-                _logger.LogInformation("disposed connection");
+                _logger.LogInformation("[Connection] disposed connection");
             }
         }
         else
@@ -63,7 +66,6 @@ public class WebSocketController : ControllerBase
     [HttpGet("checkin")]
     public async Task CheckinAsync()
     {
-        _logger.LogInformation("requesting check-in all slaves");
         await _eventDispatcher.FireEvent(new RequestCheckInEvent());
     }
 #endif

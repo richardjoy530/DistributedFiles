@@ -1,6 +1,5 @@
 ﻿using Common.Proxy.Controllers;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
 using System.Web;
 
 namespace FileServerSlave.Files
@@ -26,11 +25,13 @@ namespace FileServerSlave.Files
             var file = _fileManager.GetFile(filename);
             if (file == null)
             {
-                _logger.LogInformation("\"{}\" was not present in the file container", filename);
+                _logger.LogWarning("\"{}\" was not present in the file container", filename);
                 return null;
             }
 
-            _logger.LogInformation("\"{}\" was downloaded", filename);
+            var ip = HttpContext.Connection.RemoteIpAddress!.MapToIPv4().ToString();
+            var remotehost = new HostString(ip, HttpContext.Connection.RemotePort);
+            _logger.LogInformation("[FileDownload] \"{}\" downloaded \"{}\"", remotehost, filename);
             return file;
         }
     }

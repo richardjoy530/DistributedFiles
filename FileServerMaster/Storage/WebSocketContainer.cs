@@ -20,12 +20,12 @@ namespace FileServerMaster.Storage
             var (ReciveResult, Message) = await ws.ReadAsync();
             while (!ws.CloseStatus.HasValue)
             {
-                _logger.LogInformation("recived message: \"{Message}\"", Message);
+                _logger.LogInformation("[Message] received message: \"{Message}\"", Message);
                 HandleMessage(Message, ws);
 
                 if (ReciveResult.MessageType == WebSocketMessageType.Close)
                 {
-                    _logger.LogInformation("closing connection (remote server initiated close message)");
+                    _logger.LogInformation("[Connection] closing connection (remote server initiated close message)");
                     await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, ReciveResult.CloseStatusDescription, CancellationToken.None);
                 }
                 (ReciveResult, Message) = await ws.ReadAsync();
@@ -36,7 +36,7 @@ namespace FileServerMaster.Storage
         {
             await Process(ws =>
             {
-                _logger.LogInformation($"Closing WS: {ws.GetHashCode}");
+                _logger.LogInformation($"Closing WS: {ws.GetHashCode}"); // use events
                 return ws.Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None).ContinueWith((_) => new Task(ws.Socket.Dispose));
             });
         }
@@ -46,9 +46,9 @@ namespace FileServerMaster.Storage
 
             var closedhosts = _sockets.Where(kv => kv.Value.State != WebSocketState.Open).Select(kv => kv.Key);
 
-            foreach (var host in closedhosts)
+            foreach (var host in closedhosts) // risky. need to improve. same host with diff entries may be present. one closed and one reconected.
             {
-                _logger.LogDebug("removing \"{host}\" from socket container since its closed", host);
+                _logger.LogInformation("[SocketContainer] removing \"{host}\" from socket container since its closed", host);
                 _sockets.Remove(host);
             }
 
@@ -66,8 +66,8 @@ namespace FileServerMaster.Storage
                 var hosts = section.Split(';').Select(s => new HostString(s)).ToArray();
                 foreach (var host in hosts)
                 {
-                    _logger.LogInformation("adding \"{host}\" to socket container", host);
-                    _sockets.Add(host, ws);
+                    _logger.LogInformation("[SocketContainer] adding \"{host}\" to socket container", host);
+                    _sockets[host] = ws;
                 }
             }
         }

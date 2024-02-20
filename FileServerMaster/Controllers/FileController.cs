@@ -38,13 +38,12 @@ public class FileController : ControllerBase, IMasterFileController, IFileContro
     [HttpPost]
     public async Task UploadAsync(IFormFile file)
     {
-        _logger.LogInformation("recived file \"{filename}\"", file.FileName);
+        _logger.LogInformation("[FileUpload] recived file \"{filename}\"", file.FileName);
         _fileContainer.Add(file);
 
         var masterHost = _hostStringRetriver.GetLocalFileServerHosts().First();
         _fileDistributorManager.UpdateFileAvailablity(masterHost, [file.FileName]);
 
-        _logger.LogInformation("requesting check-in all slaves");
         await _eventDispatcher.FireEvent(new RequestCheckInEvent());
     }
 
@@ -55,11 +54,13 @@ public class FileController : ControllerBase, IMasterFileController, IFileContro
         var file = _fileContainer.Get(filename);
         if (file == null)
         {
-            _logger.LogInformation("\"{}\" was not present in the file container", filename);
+            _logger.LogWarning("\"{}\" was not present in the file container", filename);
             return null;
         }
 
-        _logger.LogInformation("\"{}\" was downloaded", filename);
+        var ip = HttpContext.Connection.RemoteIpAddress!.MapToIPv4().ToString();
+        var remotehost = new HostString(ip, HttpContext.Connection.RemotePort);
+        _logger.LogInformation("[FileDownload] \"{}\" downloaded \"{}\"", remotehost, filename);
         return file;
     }
 }

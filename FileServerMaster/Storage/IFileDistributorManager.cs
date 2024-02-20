@@ -8,7 +8,7 @@ namespace FileServerMaster.Storage
 
         HostString GetRetrivalHost(string fileName);
 
-        void RemoveHost(HostString host);
+        void RemoveMaster(string fileName);
 
         void UpdateFileAvailablity(HostString remoteHost, string[] availableFileNames);
     }

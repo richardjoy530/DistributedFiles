@@ -7,11 +7,13 @@ namespace FileServerMaster.Storage
     {
         private readonly List<FileData> _files;
         private readonly ILogger<FileContainer> _logger;
+        private readonly IFileDistributorManager _fileDistributorManager;
 
-        public FileContainer(ILogger<FileContainer> logger)
+        public FileContainer(ILogger<FileContainer> logger, IFileDistributorManager fileDistributorManager)
         {
-            _files = new List<FileData>();
+            _files = [];
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _fileDistributorManager = fileDistributorManager ?? throw new ArgumentNullException(nameof(fileDistributorManager));
         }
 
         public FileData? Get(string filename)
@@ -21,7 +23,7 @@ namespace FileServerMaster.Storage
 
         public void Add(IFormFile formFile)
         {
-            _logger.LogDebug("adding \"{filename}\" to file container", formFile.FileName);
+            _logger.LogInformation("[FileContainer] adding \"{filename}\"", formFile.FileName);
 
             var filedata = new FileData
             {
@@ -35,7 +37,15 @@ namespace FileServerMaster.Storage
 
         public void DiscardFiles(string[] slaveFileNames)
         {
-            _files.RemoveAll(f => slaveFileNames.Contains(f.FileName));
+            var filesToRemove = _files.Select(f => slaveFileNames.Contains(f.FileName)).ToArray();
+            foreach (var file in _files)
+            {
+                // master no longer host this file
+                _fileDistributorManager.RemoveMaster(file.FileName);
+
+                _logger.LogInformation("[FileContainer] removing \"{}\"", file.FileName);
+                _files.Remove(file);
+            }
         }
 
         public IEnumerable<string> GetTempFileNames()

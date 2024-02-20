@@ -39,8 +39,8 @@ public class SocketManager : ISocketManager
         do
         {
             await Listen(token);
-            _logger.LogInformation("trying to reconnect after 30 seconds");
-            Thread.Sleep(1000 * 5); // wait for 5 seconds
+            _logger.LogInformation("[Connection] trying to reconnect after 5 seconds");
+            await Task.Delay(1000 * 5); // wait for 5 seconds
         } while (true);
     }
 
@@ -54,23 +54,23 @@ public class SocketManager : ISocketManager
             var wsscheme = _secure ? "wss" : "ws";
             var wsuri = new Uri($"{wsscheme}://{_hostString}/ws");
 
-            _logger.LogInformation("trying to connect \"{wsuri}\"", wsuri);
+            _logger.LogInformation("[Connection] trying to connect \"{wsuri}\"", wsuri);
             await ws.ConnectAsync(wsuri, ct);
-            _logger.LogInformation("connection established to \"{wsuri}\"", wsuri);
+            _logger.LogInformation("[Connection] connection established to \"{wsuri}\"", wsuri);
 
             await ws.WriteAsync("ping", ct);
-            var hoststrings = string.Join(';', _hostStringRetriver.GetLocalFileServerHosts()); // this is an edge case.. need to handle it later.
+            var hoststrings = string.Join(';', _hostStringRetriver.GetLocalFileServerHosts());
             await ws.WriteAsync($"slave server hosted at: \"{hoststrings}\"", ct);
 
             var (ReciveResult, Message) = await ws.ReadAsync(ct);
             while (!ReciveResult.CloseStatus.HasValue)
             {
-                _logger.LogInformation("recived message: \"{Message}\"", Message);
+                _logger.LogInformation("[Message] received message: \"{Message}\"", Message);
                 HandleMessage(Message);
 
                 if (ReciveResult.MessageType == WebSocketMessageType.Close)
                 {
-                    _logger.LogInformation("closing connection (remote server initiated close message)");
+                    _logger.LogInformation("[Connection] closing connection (remote server initiated close message)");
                     await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, ReciveResult.CloseStatusDescription, ct);
                     break;
                 }
@@ -86,9 +86,8 @@ public class SocketManager : ISocketManager
         }
         finally
         {
-            _logger.LogInformation("disposing connection");
             ws?.Dispose();
-            _logger.LogInformation("disposed connection");
+            _logger.LogInformation("[Connection] disposed connection");
         }
     }
 

@@ -52,27 +52,18 @@ namespace FileServerSlave.EventHandlers
                 SlaveHostStrings = _hostStringRetriver.GetLocalFileServerHosts().Select(h => h.ToString()).ToArray()
             };
 
-            try
-            {
-                // api call to master server
-                var resp = _checkInController.CheckIn(req);
-                _logger.LogInformation("handled checkin event");
+            // api call to master server
+            var resp = _checkInController.CheckIn(req);
 
-                if (resp.FileLinks.Count == 0)
-                {
-                    return;
-                }
-
-                // fetch only the first one. this logic need's to be refined.
-                _logger.LogDebug("firing checkin event");
-                var downLoadEvent = new DownloadEvent(resp.FileLinks.First());
-                await _eventDispatcher.FireEvent(downLoadEvent);
-            }
-            catch (Exception ex)
+            if (resp.FileLinks.Count == 0)
             {
-                _logger.LogError(ex.Message);
-                _logger.LogTrace(new EventId(0), ex, ex.Message);
+                _logger.LogInformation("[CheckIn] no files to retrive");
+                return;
             }
+
+            // fetch only the first one. this logic need's to be refined.
+            var downLoadEvent = new DownloadEvent(resp.FileLinks.First());
+            await _eventDispatcher.FireEvent(downLoadEvent);
         }
     }
 }

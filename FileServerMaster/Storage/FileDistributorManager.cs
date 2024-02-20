@@ -1,4 +1,6 @@
 ﻿using System.Collections.Concurrent;
+using Common;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 
 namespace FileServerMaster.Storage
@@ -8,12 +10,14 @@ namespace FileServerMaster.Storage
         private readonly ConcurrentDictionary<string, Queue<HostString>> _availablityTable;
         private readonly ILogger<FileDistributorManager> _logger;
         private readonly IWebHostEnvironment _environment;
+        private readonly IHostStringRetriver _hostStringRetriver;
 
-        public FileDistributorManager(ILogger<FileDistributorManager> logger, IWebHostEnvironment environment)
+        public FileDistributorManager(ILogger<FileDistributorManager> logger, IWebHostEnvironment environment, IHostStringRetriver hostStringRetriver)
         {
             _availablityTable = new ConcurrentDictionary<string, Queue<HostString>>();
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _environment = environment ?? throw new ArgumentNullException(nameof(environment));
+            _hostStringRetriver = hostStringRetriver ?? throw new ArgumentNullException(nameof(hostStringRetriver));
         }
 
         public string[] GetAllFileNames()
@@ -27,7 +31,8 @@ namespace FileServerMaster.Storage
             {
                 var host = hosts.Dequeue();
                 hosts.Enqueue(host);
-                _logger.LogDebug("retrival host for \"{fileName}\" is \"{host}\"", fileName, host);
+                _logger.LogInformation("[AvailablityTable] host for \"{fileName}\" is \"{host}\"", fileName, host);
+                LogAvailablityTable();
                 return host;
             }
 
@@ -35,39 +40,37 @@ namespace FileServerMaster.Storage
             throw new InvalidOperationException($"\"{fileName}\" does not exist in the file availablity table");
         }
 
-        public void RemoveHost(HostString host)
+        public void RemoveMaster(string fileName)
         {
-            _logger.LogDebug("removing \"{host}\" from availablity table", host);
-            foreach (var hosts in _availablityTable.Values)
-            {
-                if (hosts.Contains(host))
-                {
-                    while (true) // assuming there is only few hosts per file. todo need to come up with another great idea. 
-                    {
-                        var temp = hosts.Dequeue();
-                        if (temp == host)
-                        {
-                            SerializeAvailablityTableInDevelopment();
-                            return;
-                        }
+            var masterHost = _hostStringRetriver.GetLocalFileServerHosts().First();
+            _logger.LogInformation("[AvailablityTable] \"{file}\" is no longer hosted by master \"{host}\"", fileName, masterHost);
 
-                        hosts.Enqueue(temp);
+            if (_availablityTable.TryGetValue(fileName, out var hostStrings))
+            {
+                for (int i = 0; i < hostStrings.Count; i++)
+                {
+                    var temp = hostStrings.Dequeue();
+                    if (temp == masterHost)
+                    {
+                        LogAvailablityTable();
+                        return;
                     }
+
+                    hostStrings.Enqueue(temp);
                 }
             }
-
-            SerializeAvailablityTableInDevelopment();
         }
 
         public void UpdateFileAvailablity(HostString host, string[] availableFileNames)
         {
-            _logger.LogDebug("updating file availablity table with \"{host}\" - \"{filenames}\"", host, string.Join(',', availableFileNames));
             foreach (var fileName in availableFileNames)
             {
                 if (_availablityTable.TryGetValue(fileName, out var hosts))
                 {
+                    _logger.LogInformation("[AvailablityTable] \"{file}\" is already present", fileName);
                     if (!hosts.Contains(host))
                     {
+                        _logger.LogInformation("[AvailablityTable] \"{file}\" hosted by \"{host}\"", fileName, host);
                         hosts.Enqueue(host);
                     }
                 }
@@ -75,20 +78,22 @@ namespace FileServerMaster.Storage
                 {
                     hosts = new Queue<HostString>();
                     hosts.Enqueue(host);
-
+                    _logger.LogInformation("[AvailablityTable] \"{file}\" hosted by \"{host}\"", fileName, host);
                     _availablityTable.TryAdd(fileName, hosts);
                 }
             }
 
-            SerializeAvailablityTableInDevelopment();
+            LogAvailablityTable();
         }
 
-        private void SerializeAvailablityTableInDevelopment()
+        private void LogAvailablityTable()
         {
             if (_environment.IsDevelopment())
             {
-                var serialised = JsonConvert.SerializeObject(_availablityTable);
-                _logger.LogDebug("awailablity table: \n {serialised}", serialised);
+                foreach (var item in _availablityTable)
+                {
+                    _logger.LogInformation("[AvailablityTable] \"{file}\" hosted by \"{host}\"", item.Key, string.Join(" - ", item.Value));
+                }
             }
         }
     }

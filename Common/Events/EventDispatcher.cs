@@ -16,7 +16,8 @@ namespace Common.Events
 
         public async Task FireEvent(EventBase e)
         {
-           await  _eventHandlerResolver
+            _logger.LogInformation("[Event] \"{event}\" dispatched", e.GetType().Name);
+            await _eventHandlerResolver
                 .ResolveHandlerFor(e)
                 .HandleEvent(e);
         }

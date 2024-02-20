@@ -3,6 +3,7 @@ using Common.Events;
 using FileServerSlave.EventHandlers;
 using FileServerSlave.Events;
 using FileServerSlave.Files;
+using Microsoft.Extensions.Options;
 
 namespace FileServerSlave;
 
@@ -14,8 +15,13 @@ public abstract partial class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Add services to the container.
+        builder.Logging.AddSimpleConsole( o =>
+        {
+            o.SingleLine = true;
+            o.TimestampFormat = "HH:mm:ss ";
+        });
 
+        // Add services to the container.
         builder.Services.AddControllers();
 
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -52,6 +58,7 @@ public abstract partial class Program
             var saveLocation = args[args.ToList().IndexOf("--save") + 1];
             app.Services.GetRequiredService<IDestinationLocator>().SetCustomLocation(saveLocation);
         }
+
         var sm = app.Services.GetRequiredService<ISocketManager>();
         sm.EstablishConnection(cts.Token);
 

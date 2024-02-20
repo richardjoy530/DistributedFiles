@@ -12,6 +12,12 @@ public abstract class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        builder.Logging.AddSimpleConsole(o =>
+        {
+            o.SingleLine = true;
+            o.TimestampFormat = "HH:mm:ss ";
+        });
+
         // Add services to the container.
 
         builder.Services.AddControllers();

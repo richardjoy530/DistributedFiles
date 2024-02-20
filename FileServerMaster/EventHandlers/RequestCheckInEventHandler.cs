@@ -27,10 +27,14 @@ namespace FileServerMaster.EventHandlers
 
             if (rcie.RequestCheckInAll)
             {
-                await _webSocketContainer.Process(hws => hws.Socket.WriteAsync("checkin"));
+                _logger.LogInformation("[RequestCheckInEvent] RequestCheckInAll");
+
+                await _webSocketContainer.Process(SendCheckInMessage);
             }
             else if (rcie.IsExclude == false)
             {
+                _logger.LogInformation("[RequestCheckInEvent] IsExclude == false");
+
                 await _webSocketContainer.Process(hws =>
                 {
                     if (rcie.Slaves!.Contains(hws.Host))
@@ -45,11 +49,13 @@ namespace FileServerMaster.EventHandlers
             {
                 await _webSocketContainer.Process(hws =>
                 {
+
                     if (!rcie.Slaves!.Contains(hws.Host))
                     {
-                        return hws.Socket.WriteAsync("checkin");
+                        return SendCheckInMessage(hws);
                     }
 
+                    _logger.LogInformation($"[RequestCheckInEvent] IsExclude == true");
                     return new Task(() => { });
                 });
             }
@@ -57,7 +63,7 @@ namespace FileServerMaster.EventHandlers
 
         private Task SendCheckInMessage((HostString Host, WebSocket Socket) hws)
         {
-            _logger.LogInformation("requesting check-in from \"{host}\"", hws.Host);
+            _logger.LogInformation("[Message] send \"checkin\" to \"{host}\"", hws.Host);
             return hws.Socket.WriteAsync("checkin");
         }
     }
