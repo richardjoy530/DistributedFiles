@@ -14,10 +14,10 @@ namespace Common.Events
             _eventHandlerResolver = eventHandlerResolver ?? throw new ArgumentNullException(nameof(eventHandlerResolver));
         }
 
-        public async Task FireEvent(EventBase e)
+        public void FireEvent(EventBase e)
         {
             _logger.LogInformation("[Event] \"{event}\" dispatched", e.GetType().Name);
-            await _eventHandlerResolver
+            _eventHandlerResolver
                 .ResolveHandlerFor(e)
                 .HandleEvent(e);
         }

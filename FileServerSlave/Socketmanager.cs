@@ -91,12 +91,12 @@ public class SocketManager : ISocketManager
         }
     }
 
-    private async void HandleMessage(string message)
+    private void HandleMessage(string message)
     {
         if (message.Contains("checkin") || message.Contains("pong"))
         {
             var checkinEvent = new CheckInEvent();
-            await _eventDispatcher.FireEvent(checkinEvent);
+            _eventDispatcher.FireEvent(checkinEvent);
         }
     }
 }

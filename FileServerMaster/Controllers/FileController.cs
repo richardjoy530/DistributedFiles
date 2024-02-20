@@ -36,7 +36,7 @@ public class FileController : ControllerBase, IMasterFileController, IFileContro
     }
 
     [HttpPost]
-    public async Task UploadAsync(IFormFile file)
+    public void UploadAsync(IFormFile file)
     {
         _logger.LogInformation("[FileUpload] recived file \"{filename}\"", file.FileName);
         _fileContainer.Add(file);
@@ -44,7 +44,7 @@ public class FileController : ControllerBase, IMasterFileController, IFileContro
         var masterHost = _hostStringRetriver.GetLocalFileServerHosts().First();
         _fileDistributorManager.UpdateFileAvailablity(masterHost, [file.FileName]);
 
-        await _eventDispatcher.FireEvent(new RequestCheckInEvent());
+        _eventDispatcher.FireEvent(new RequestCheckInEvent());
     }
 
     [HttpGet("{filename}")]

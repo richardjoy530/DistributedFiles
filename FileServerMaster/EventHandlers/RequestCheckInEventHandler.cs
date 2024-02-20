@@ -17,7 +17,7 @@ namespace FileServerMaster.EventHandlers
             _webSocketContainer = webSocketContainer ?? throw new ArgumentNullException(nameof(webSocketContainer));
         }
 
-        public async Task HandleEvent(EventBase e)
+        public void HandleEvent(EventBase e)
         {
             if (e is not RequestCheckInEvent rcie)
             {
@@ -27,44 +27,49 @@ namespace FileServerMaster.EventHandlers
 
             if (rcie.RequestCheckInAll)
             {
-                _logger.LogInformation("[RequestCheckInEvent] RequestCheckInAll");
+                _logger.LogInformation("[RequestCheckInEvent] requesting checkin from all slaves");
 
-                await _webSocketContainer.Process(SendCheckInMessage);
+                _webSocketContainer.Process(SendCheckInMessage);
             }
             else if (rcie.IsExclude == false)
             {
-                _logger.LogInformation("[RequestCheckInEvent] IsExclude == false");
+                _logger.LogInformation("[RequestCheckInEvent] requesting checkin from slaves except \"{slaves}\"", string.Join(" - ", rcie.Slaves!));
 
-                await _webSocketContainer.Process(hws =>
+                _webSocketContainer.Process(hws =>
                 {
                     if (rcie.Slaves!.Contains(hws.Host))
                     {
-                        return SendCheckInMessage(hws);
+                        SendCheckInMessage(hws);
                     }
-
-                    return new Task(() => { });
                 });
             }
             else
             {
-                await _webSocketContainer.Process(hws =>
-                {
+                _logger.LogInformation("[RequestCheckInEvent] requesting checkin from slaves \"{slaves}\"", string.Join(" - ", rcie.Slaves!));
 
+                _webSocketContainer.Process(hws =>
+                {
                     if (!rcie.Slaves!.Contains(hws.Host))
                     {
-                        return SendCheckInMessage(hws);
+                        SendCheckInMessage(hws);
                     }
-
-                    _logger.LogInformation($"[RequestCheckInEvent] IsExclude == true");
-                    return new Task(() => { });
                 });
             }
         }
 
-        private Task SendCheckInMessage((HostString Host, WebSocket Socket) hws)
+        private void SendCheckInMessage((HostString Host, WebSocket Socket) hws)
         {
             _logger.LogInformation("[Message] send \"checkin\" to \"{host}\"", hws.Host);
-            return hws.Socket.WriteAsync("checkin");
+
+            try
+            {
+                _ = hws.Socket.WriteAsync("checkin");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                _logger.LogTrace(new EventId(0), ex, ex.Message);
+            }
         }
     }
 }

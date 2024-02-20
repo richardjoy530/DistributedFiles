@@ -7,6 +7,6 @@ namespace FileServerMaster.Web.Controllers
     {
         [HttpPost]
         [Route("file")]
-        Task UploadAsync(IFormFile file);
+        void UploadAsync(IFormFile file);
     }
 }

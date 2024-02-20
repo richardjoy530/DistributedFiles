@@ -64,9 +64,9 @@ public class WebSocketController : ControllerBase
 
 #if DEBUG
     [HttpGet("checkin")]
-    public async Task CheckinAsync()
+    public void CheckinAsync()
     {
-        await _eventDispatcher.FireEvent(new RequestCheckInEvent());
+        _eventDispatcher.FireEvent(new RequestCheckInEvent());
     }
 #endif
 }

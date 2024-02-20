@@ -38,7 +38,7 @@ namespace FileServerSlave.EventHandlers
             _checkInController = ApiInterceptor.GetController<ICheckInController>(masterHostString, secure);
         }
 
-        public async Task HandleEvent(EventBase e)
+        public void HandleEvent(EventBase e)
         {
             if (e is not CheckInEvent _)
             {
@@ -63,7 +63,7 @@ namespace FileServerSlave.EventHandlers
 
             // fetch only the first one. this logic need's to be refined.
             var downLoadEvent = new DownloadEvent(resp.FileLinks.First());
-            await _eventDispatcher.FireEvent(downLoadEvent);
+            _eventDispatcher.FireEvent(downLoadEvent);
         }
     }
 }

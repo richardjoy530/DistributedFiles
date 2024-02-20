@@ -2,6 +2,6 @@
 {
     public interface IEventDispatcher
     {
-        Task FireEvent(EventBase e);
+        void FireEvent(EventBase e);
     }
 }

@@ -32,7 +32,7 @@ namespace FileServerMaster.Storage
             }
         }
 
-        public async Task Process(Func<(HostString Host, WebSocket Socket), Task> excecuter)
+        public void Process(Action<(HostString Host, WebSocket Socket)> excecuter)
         {
 
             var closedhosts = _sockets.Where(kv => kv.Value.State != WebSocketState.Open).Select(kv => kv.Key);
@@ -45,7 +45,7 @@ namespace FileServerMaster.Storage
 
             foreach (var ws in _sockets)
             {
-                await excecuter((ws.Key, ws.Value));
+                excecuter((ws.Key, ws.Value));
             }
         }
 

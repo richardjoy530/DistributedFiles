@@ -2,6 +2,6 @@
 {
     public interface IEventHandler
     {
-        Task HandleEvent(EventBase e);
+        void HandleEvent(EventBase e);
     }
 }

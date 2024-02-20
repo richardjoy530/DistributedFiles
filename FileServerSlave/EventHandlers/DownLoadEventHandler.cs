@@ -23,7 +23,7 @@ namespace FileServerSlave.EventHandlers
             _ = bool.TryParse(configuration["UseHttps"], out _secure);
         }
 
-        public async Task HandleEvent(EventBase e)
+        public void HandleEvent(EventBase e)
         {
             if (e is not DownloadEvent de)
             {
@@ -50,11 +50,11 @@ namespace FileServerSlave.EventHandlers
                 }
                 else
                 {
-                    await _fileManager.SaveFile(resp);
+                    _fileManager.SaveFile(resp);
                 }
 
                 var ce = new CheckInEvent();
-                await _eventDispatcher.FireEvent(ce);
+                _eventDispatcher.FireEvent(ce);
             }
             catch (Exception ex)
             {
