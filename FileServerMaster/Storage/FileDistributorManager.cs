@@ -10,6 +10,8 @@ namespace FileServerMaster.Storage
         private readonly IWebHostEnvironment _environment;
         private readonly IHostStringRetriver _hostStringRetriver;
 
+        private static readonly object locker = new();
+
         public FileDistributorManager(ILogger<FileDistributorManager> logger, IWebHostEnvironment environment, IHostStringRetriver hostStringRetriver)
         {
             _availablityTable = new ConcurrentDictionary<string, ConcurrentQueue<HostString>>();
@@ -28,7 +30,7 @@ namespace FileServerMaster.Storage
             if (_availablityTable.TryGetValue(fileName, out var hosts))
             {
                 HostString host;
-                lock (new object())
+                lock (locker)
                 {
                     hosts.TryDequeue(out host);
                     hosts.Enqueue(host);
