@@ -51,15 +51,18 @@ namespace FileServerMaster.Storage
             {
                 for (int i = 0; i < hostStrings.Count; i++)
                 {
-                    hostStrings.TryDequeue(out var temp);
-                    if (temp == masterHost)
+                    lock (hostStrings)
                     {
-                        LogAvailablityTable();
-                        _logger.LogInformation("[AvailablityTable] \"{file}\" is no longer hosted by master \"{host}\"", fileName, masterHost);
-                        return;
-                    }
+                        hostStrings.TryDequeue(out var temp);
+                        if (temp == masterHost)
+                        {
+                            LogAvailablityTable();
+                            _logger.LogInformation("[AvailablityTable] \"{file}\" is no longer hosted by master \"{host}\"", fileName, masterHost);
+                            return;
+                        }
 
-                    hostStrings.Enqueue(temp);
+                        hostStrings.Enqueue(temp);
+                    }
                 }
             }
         }
