@@ -35,6 +35,7 @@ public abstract class Program
 
         builder.Services.AddKeyedSingleton<IEventHandler, RequestCheckInEventHandler>(nameof(RequestCheckInEvent));
         builder.Services.AddKeyedSingleton<IEventHandler, SocketClosedEventHandler>(nameof(SocketClosedEvent));
+        builder.Services.AddKeyedSingleton<IEventHandler, DisconnectSlaveEventHandler>(nameof(DisconnectSlaveEvent));
 
         var app = builder.Build();
 

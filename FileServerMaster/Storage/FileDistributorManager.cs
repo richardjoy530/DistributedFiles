@@ -124,6 +124,7 @@ namespace FileServerMaster.Storage
 
         private void LogAvailablityTable()
         {
+            return;
             if (_environment.IsDevelopment())
             {
                 foreach (var item in _availablityTable)

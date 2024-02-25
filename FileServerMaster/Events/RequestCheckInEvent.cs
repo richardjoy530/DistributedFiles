@@ -4,7 +4,6 @@ namespace FileServerMaster.Events
 {
     public class RequestCheckInEvent : EventBase
     {
-        
         public readonly bool RequestCheckInAll;
 
         public readonly bool IsExclude;

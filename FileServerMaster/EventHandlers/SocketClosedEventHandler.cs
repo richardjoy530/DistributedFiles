@@ -29,7 +29,7 @@ namespace FileServerMaster.EventHandlers
             _fileDistributorManager.RemoveHosting(sce.SlaveHostAddress);
 
             var hoststrings = string.Join(';', sce.SlaveHostAddress);
-            _logger.LogInformation("[SocketClosedEventHandler] disposed and removed \"{}\"", hoststrings);
+            _logger.LogInformation("[SocketClosedEvent] disposed and removed \"{}\"", hoststrings);
         }
     }
 }

@@ -1,8 +1,8 @@
-using FileServerMaster.Storage;
 using Common;
-using Microsoft.AspNetCore.Mvc;
 using Common.Events;
 using FileServerMaster.Events;
+using FileServerMaster.Storage;
+using Microsoft.AspNetCore.Mvc;
 
 namespace FileServerMaster.Controllers;
 
@@ -53,7 +53,6 @@ public class WebSocketController : ControllerBase
             }
             finally
             {
-                // need to come up with an idea to remove this server's file host from the availablity table.
                 webSocket?.Dispose();
                 _logger.LogInformation("[Connection] disposed connection");
                 _eventDispatcher.FireEvent(new SocketClosedEvent(slaveHosts.ToArray()));
@@ -75,8 +74,7 @@ public class WebSocketController : ControllerBase
     [HttpDelete]
     public void CloseAllAsync()
     {
-        _logger.LogInformation("Closing all WebSockets");
-        _webSocketContainer.CloseWebSocketAsync(); // todo use event dispatcher
+        _eventDispatcher.FireEvent(new DisconnectSlaveEvent());
     }
 #endif
 }
