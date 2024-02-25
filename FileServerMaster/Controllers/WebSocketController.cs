@@ -13,16 +13,13 @@ public class WebSocketController : ControllerBase
     private readonly ILogger<WebSocketController> _logger;
     private readonly IEventDispatcher _eventDispatcher;
     private readonly IWebSocketContainer _webSocketContainer;
-    private readonly IFileDistributorManager _fileDistributorManager;
 
     public WebSocketController(ILogger<WebSocketController> logger,
                                IWebSocketContainer webSocketContainer,
-                               IFileDistributorManager fileDistributorManager,
                                IEventDispatcher eventDispatcher)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _webSocketContainer = webSocketContainer ?? throw new ArgumentNullException(nameof(webSocketContainer));
-        _fileDistributorManager = fileDistributorManager ?? throw new ArgumentNullException(nameof(fileDistributorManager));
         _eventDispatcher = eventDispatcher ?? throw new ArgumentNullException(nameof(eventDispatcher));
     }
 
