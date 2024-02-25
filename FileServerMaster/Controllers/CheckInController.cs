@@ -37,7 +37,7 @@ namespace FileServerMaster.Controllers
             /*
              * Check-In Sequence
              * 
-             * 1. Remove the file from the file-container if you find it in any slave-servers.
+             * 1. DisposeAndRemove the file from the file-container if you find it in any slave-servers.
              *      container files - slave files
              * 
              * 2. Update the availablity table with file-remotehost map.

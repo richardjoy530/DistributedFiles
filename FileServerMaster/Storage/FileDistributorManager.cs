@@ -10,8 +10,6 @@ namespace FileServerMaster.Storage
         private readonly IWebHostEnvironment _environment;
         private readonly IHostStringRetriver _hostStringRetriver;
 
-        private static readonly object locker = new();
-
         public FileDistributorManager(ILogger<FileDistributorManager> logger, IWebHostEnvironment environment, IHostStringRetriver hostStringRetriver)
         {
             _availablityTable = new ConcurrentDictionary<string, ConcurrentQueue<HostString>>();
@@ -30,7 +28,7 @@ namespace FileServerMaster.Storage
             if (_availablityTable.TryGetValue(fileName, out var hosts))
             {
                 HostString host;
-                lock (locker)
+                lock (hosts) // locking the ccq since its being manipulated here.
                 {
                     hosts.TryDequeue(out host);
                     hosts.Enqueue(host);
@@ -48,7 +46,6 @@ namespace FileServerMaster.Storage
         public void RemoveMaster(string fileName)
         {
             var masterHost = _hostStringRetriver.GetLocalFileServerHosts().First();
-            _logger.LogInformation("[AvailablityTable] \"{file}\" is no longer hosted by master \"{host}\"", fileName, masterHost);
 
             if (_availablityTable.TryGetValue(fileName, out var hostStrings))
             {
@@ -58,12 +55,43 @@ namespace FileServerMaster.Storage
                     if (temp == masterHost)
                     {
                         LogAvailablityTable();
+                        _logger.LogInformation("[AvailablityTable] \"{file}\" is no longer hosted by master \"{host}\"", fileName, masterHost);
                         return;
                     }
 
                     hostStrings.Enqueue(temp);
                 }
             }
+        }
+
+        public void RemoveHosting(HostString[] slaveHostAddress)
+        {
+            foreach (var fileName in _availablityTable.Keys)
+            {
+                lock (_availablityTable[fileName]) // locking the ccq since its being manipulated here.
+                {
+                    var hsl = slaveHostAddress.ToList();
+                    for (int i = 0; i < _availablityTable[fileName].Count; i++)
+                    {
+                        if (hsl.Count == 0)
+                        {
+                            break;
+                        }
+                        
+                        _availablityTable[fileName].TryDequeue(out var temp);
+                        
+                        if (!hsl.Remove(temp)) // true when temp is not present in hsl, i.e. continue the loop by enqueuing the dequeued element. 
+                        {
+                            _availablityTable[fileName].Enqueue(temp);
+                        }
+                        else
+                        {
+                            _logger.LogInformation("[AvailablityTable] \"{file}\" is no longer hosted by \"{host}\"", fileName, temp);
+                        }
+                    }
+                }
+            }
+            LogAvailablityTable();
         }
 
         public void UpdateFileAvailablity(HostString host, string[] availableFileNames)
@@ -93,7 +121,6 @@ namespace FileServerMaster.Storage
 
         private void LogAvailablityTable()
         {
-            return;
             if (_environment.IsDevelopment())
             {
                 foreach (var item in _availablityTable)

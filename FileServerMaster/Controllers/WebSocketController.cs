@@ -32,17 +32,19 @@ public class WebSocketController : ControllerBase
         if (HttpContext.WebSockets.IsWebSocketRequest)
         {
             var ip = HttpContext.Connection.RemoteIpAddress!.MapToIPv4().ToString();
-            var socketHost = new HostString(ip, HttpContext.Connection.RemotePort);
+            var socketHost = new HostString(ip, HttpContext.Connection.RemotePort); // this is not the slave file-server's host address
             using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-            _logger.LogInformation("[Connection] accepted connection from \"{host}\"", socketHost); // this is not the slave file-server's host address
+            _logger.LogInformation("[Connection] accepted connection from \"{host}\"", socketHost);
 
             var (_, Message) = await webSocket.ReadAsync();
             _logger.LogInformation("[Message] received message: \"{Message}\"", Message);
             await webSocket.WriteAsync("pong");
 
+            var slaveHosts = new List<HostString>();
+
             try
             {
-                await _webSocketContainer.Listen(webSocket);
+                await _webSocketContainer.Listen(webSocket, slaveHosts);
             }
             catch (Exception ex)
             {
@@ -54,6 +56,7 @@ public class WebSocketController : ControllerBase
                 // need to come up with an idea to remove this server's file host from the availablity table.
                 webSocket?.Dispose();
                 _logger.LogInformation("[Connection] disposed connection");
+                _eventDispatcher.FireEvent(new SocketClosedEvent(slaveHosts.ToArray()));
             }
         }
         else

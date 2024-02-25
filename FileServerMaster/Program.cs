@@ -34,6 +34,7 @@ public abstract class Program
         builder.Services.AddSingleton<IEventHandlerResolver, EventHandlerResolver>();
 
         builder.Services.AddKeyedSingleton<IEventHandler, RequestCheckInEventHandler>(nameof(RequestCheckInEvent));
+        builder.Services.AddKeyedSingleton<IEventHandler, SocketClosedEventHandler>(nameof(SocketClosedEvent));
 
         var app = builder.Build();
 
