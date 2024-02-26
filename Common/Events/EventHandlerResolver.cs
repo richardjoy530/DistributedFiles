@@ -25,7 +25,7 @@ namespace Common.Events
             }
 
             handler = _serviceProvider.GetKeyedService<IEventHandler>(e.GetType().Name);
-            _eventHandlerMap.Add(e.GetType().Name, handler!);
+            _eventHandlerMap.TryAdd(e.GetType().Name, handler!);
 
             return handler!;
         }
