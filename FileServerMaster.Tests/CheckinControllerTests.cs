@@ -23,7 +23,7 @@ namespace FileServerMaster.Tests
         {
             _fileContainer = new Mock<IFileContainer>();
             _fileContainer.Setup(i => i.GetTempFileNames()).Returns(containerFiles);
-            _fileContainer.Setup(i => i.DiscardFilesAsync(It.IsAny<string[]>()));
+            _fileContainer.Setup(i => i.DiscardFiles(It.IsAny<string[]>()));
 
             _fileDistributorManager = new Mock<IFileDistributorManager>();
             _fileDistributorManager.Setup(i => i.UpdateFileAvailablity(new HostString("1.1.1.1", 443), remoteFiles));

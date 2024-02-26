@@ -1,7 +1,5 @@
 ﻿using Common.Proxy.Controllers;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
-using System.Net.Http.Headers;
 using System.Web;
 
 namespace FileServerSlave.Files
@@ -19,30 +17,22 @@ namespace FileServerSlave.Files
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+        // need to optimize this endpoints. use stream.
         [HttpGet("{filename}")]
-        public HttpResponseMessage? DownloadFileStream(string filename)
+        public FileData? DownLoadFile(string filename)
         {
             filename = HttpUtility.UrlDecode(filename);
-            var stream = _fileManager.GetStream(filename);
-            if (stream == null)
+            var file = _fileManager.GetFile(filename);
+            if (file == null)
             {
                 _logger.LogWarning("\"{}\" was not present in the file container", filename);
                 return null;
             }
 
-            HttpResponseMessage response = new(HttpStatusCode.OK);
-            response.Content = new StreamContent(stream);
-            response.Content.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
-            response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
-            {
-                FileName = filename
-            };
-
             var ip = HttpContext.Connection.RemoteIpAddress!.MapToIPv4().ToString();
             var remotehost = new HostString(ip, HttpContext.Connection.RemotePort);
-
             _logger.LogInformation("[FileDownload] \"{}\" downloaded \"{}\"", remotehost, filename);
-            return response;
+            return file;
         }
     }
 }

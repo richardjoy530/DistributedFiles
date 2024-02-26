@@ -6,8 +6,6 @@ using FileServerMaster.Storage;
 using FileServerMaster.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using System.Web;
-using System.Net;
-using System.Net.Http.Headers;
 
 namespace FileServerMaster.Controllers;
 
@@ -16,18 +14,21 @@ namespace FileServerMaster.Controllers;
 public class FileController : ControllerBase, IMasterFileController, IFileController
 {
     private readonly ILogger<FileController> _logger;
+    private readonly IWebSocketContainer _webSocketContainer;
     private readonly IEventDispatcher _eventDispatcher;
     private readonly IFileContainer _fileContainer;
     private readonly IFileDistributorManager _fileDistributorManager;
     private readonly IHostStringRetriver _hostStringRetriver;
 
     public FileController(ILogger<FileController> logger,
+                          IWebSocketContainer webSocketContainer,
                           IFileContainer fileQueueContainer,
                           IFileDistributorManager fileDistributorManager,
                           IHostStringRetriver hostStringRetriver,
                           IEventDispatcher eventDispatcher)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _webSocketContainer = webSocketContainer ?? throw new ArgumentNullException(nameof(webSocketContainer));
         _fileContainer = fileQueueContainer ?? throw new ArgumentNullException(nameof(fileQueueContainer));
         _fileDistributorManager = fileDistributorManager ?? throw new ArgumentNullException(nameof(fileDistributorManager));
         _hostStringRetriver = hostStringRetriver ?? throw new ArgumentNullException(nameof(hostStringRetriver));
@@ -35,10 +36,10 @@ public class FileController : ControllerBase, IMasterFileController, IFileContro
     }
 
     [HttpPost]
-    public async Task UploadAsync(IFormFile file)
+    public void UploadAsync(IFormFile file)
     {
         _logger.LogInformation("[FileUpload] recived file \"{filename}\"", file.FileName);
-        await _fileContainer.AddToStream(file);
+        _fileContainer.Add(file);
 
         var masterHost = _hostStringRetriver.GetLocalFileServerHosts().First();
         _fileDistributorManager.UpdateFileAvailablity(masterHost, [file.FileName]);
@@ -47,28 +48,19 @@ public class FileController : ControllerBase, IMasterFileController, IFileContro
     }
 
     [HttpGet("{filename}")]
-    public HttpResponseMessage? DownloadFileStream(string filename)
+    public FileData? DownLoadFile(string filename)
     {
         filename = HttpUtility.UrlDecode(filename);
-        var stream = _fileContainer.GetStream(filename);
-        if (stream == null)
+        var file = _fileContainer.Get(filename);
+        if (file == null)
         {
             _logger.LogWarning("\"{}\" was not present in the file container", filename);
             return null;
         }
 
-        HttpResponseMessage response = new(HttpStatusCode.OK);
-        response.Content = new StreamContent(stream);
-        response.Content.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
-        response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
-        {
-            FileName = filename
-        };
-
         var ip = HttpContext.Connection.RemoteIpAddress!.MapToIPv4().ToString();
         var remotehost = new HostString(ip, HttpContext.Connection.RemotePort);
-
         _logger.LogInformation("[FileDownload] \"{}\" downloaded \"{}\"", remotehost, filename);
-        return response;
+        return file;
     }
 }
