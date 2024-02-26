@@ -5,11 +5,11 @@ namespace FileServerMaster.Storage
 {
     public interface IFileContainer
     {
-        bool Add(IFormFile formFile);
+        Task<bool> AddToStream(IFormFile formFile);
+        
+        Task DiscardFilesAsync(string[] filesToRemoveFromContainer);
 
-        void DiscardFiles(string[] filesToRemoveFromContainer);
-
-        FileData? Get(string filename);
+        Stream? GetStream(string filename);
 
         IEnumerable<string> GetTempFileNames();
     }

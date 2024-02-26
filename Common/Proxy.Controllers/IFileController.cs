@@ -4,8 +4,7 @@ namespace Common.Proxy.Controllers
 {
     public interface IFileController
     {
-        [HttpGet]
         [Route("file/{filename}")]
-        FileData? DownLoadFile(string filename);
+        HttpResponseMessage? DownloadFileStream(string filename);
     }
 }

@@ -1,38 +1,38 @@
 ﻿using System.Collections.Concurrent;
-using Common;
 using Common.Proxy.Controllers;
 
 namespace FileServerMaster.Storage
 {
     public class FileContainer : IFileContainer
     {
-        private readonly ConcurrentDictionary<string, FileData> _files;
+        private readonly ConcurrentDictionary<string, MemoryStream> _filesStreams;
         private readonly ILogger<FileContainer> _logger;
         private readonly IFileDistributorManager _fileDistributorManager;
 
         public FileContainer(ILogger<FileContainer> logger, IFileDistributorManager fileDistributorManager)
         {
-            _files = [];
+            _filesStreams = [];
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _fileDistributorManager = fileDistributorManager ?? throw new ArgumentNullException(nameof(fileDistributorManager));
         }
 
-        public FileData? Get(string filename)
+        public Stream? GetStream(string filename)
         {
-            return _files.FirstOrDefault(f => f.Key == filename).Value;
+            if (_filesStreams.TryGetValue(filename, out var ms))
+            {
+                return ms;
+            }
+
+            return null;
         }
 
-        public bool Add(IFormFile formFile)
+        public async Task<bool> AddToStream(IFormFile formFile)
         {
             _logger.LogInformation("[FileContainer] adding \"{filename}\"", formFile.FileName);
+            var ms = new MemoryStream();
+            await formFile.CopyToAsync(ms);
 
-            var filedata = new FileData
-            {
-                FileName = formFile.FileName,
-                ContentBase64 = formFile.OpenReadStream().GetBytes()
-            };
-
-            if (_files.TryAdd(filedata.FileName, filedata))
+            if (_filesStreams.TryAdd(formFile.FileName, ms))
             {
                 _logger.LogDebug("added \"{filename}\" to file container", formFile.FileName);
                 return true;
@@ -41,22 +41,24 @@ namespace FileServerMaster.Storage
             return false;
         }
 
-        public void DiscardFiles(string[] slaveFileNames)
+        public async Task DiscardFilesAsync(string[] slaveFileNames)
         {
-            var filesToRemove = _files.Where(f => slaveFileNames.Contains(f.Value.FileName)).Select(kv => kv.Key).ToArray();
+            var filesToRemove = _filesStreams.Where(f => slaveFileNames.Contains(f.Key)).Select(kv => kv.Key).ToArray();
             foreach (var fileName in filesToRemove)
             {
                 // master no longer host this file
                 _fileDistributorManager.RemoveMaster(fileName);
 
                 _logger.LogInformation("[FileContainer] removing \"{}\"", fileName);
-                _files.Remove(fileName, out _);
+                _filesStreams.Remove(fileName, out var stream);
+                await stream!.DisposeAsync();
+                _logger.LogInformation("[FileContainer] disposed stream for \"{}\"", fileName);
             }
         }
 
         public IEnumerable<string> GetTempFileNames()
         {
-            return _files.Select(f => f.Value.FileName);
+            return _filesStreams.Keys;
         }
     }
 }

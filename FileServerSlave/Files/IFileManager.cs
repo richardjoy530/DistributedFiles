@@ -5,9 +5,9 @@ namespace FileServerSlave.Files
     public interface IFileManager
     {
         string[] GetAvailableFilesOnThisServer();
-
-        FileData? GetFile(string filename);
-
-        Task SaveFile(FileData file);
+        
+        FileStream? GetStream(string filename);
+        
+        Task SaveFileAsync(Stream stream, string fileName);
     }
 }

@@ -42,7 +42,7 @@ namespace FileServerSlave.EventHandlers
 
             try
             {
-                var resp = fileController.DownLoadFile(de.FileName);
+                var resp = fileController.DownloadFileStream(de.FileName);
 
                 if (resp is null)
                 {
@@ -50,7 +50,7 @@ namespace FileServerSlave.EventHandlers
                 }
                 else
                 {
-                    _fileManager.SaveFile(resp);
+                    _ = _fileManager.SaveFileAsync(resp.Content.ReadAsStream(), de.FileName);
                 }
 
                 var ce = new CheckInEvent();

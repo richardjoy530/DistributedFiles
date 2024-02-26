@@ -54,7 +54,7 @@ namespace FileServerMaster.Controllers
             _logger.LogInformation("[CheckIn] checked-in slave server addresse(s) are \"{addresses}\"", string.Join(';', request.SlaveHostStrings));
 
             // 1
-            _fileContainer.DiscardFiles(request.AvailableFileNames);
+            _ = _fileContainer.DiscardFilesAsync(request.AvailableFileNames); // i wonder if we need to await this..
 
             // 2
             var tablefilesold = _fileDistributorManager.GetAllFileNames(); // if we update the file table in #2, then #4 will never run
