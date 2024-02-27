@@ -14,21 +14,18 @@ namespace FileServerMaster.Controllers;
 public class FileController : ControllerBase, IMasterFileController, IFileController
 {
     private readonly ILogger<FileController> _logger;
-    private readonly IWebSocketContainer _webSocketContainer;
     private readonly IEventDispatcher _eventDispatcher;
     private readonly IFileContainer _fileContainer;
     private readonly IFileDistributorManager _fileDistributorManager;
     private readonly IHostStringRetriver _hostStringRetriver;
 
     public FileController(ILogger<FileController> logger,
-                          IWebSocketContainer webSocketContainer,
                           IFileContainer fileQueueContainer,
                           IFileDistributorManager fileDistributorManager,
                           IHostStringRetriver hostStringRetriver,
                           IEventDispatcher eventDispatcher)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _webSocketContainer = webSocketContainer ?? throw new ArgumentNullException(nameof(webSocketContainer));
         _fileContainer = fileQueueContainer ?? throw new ArgumentNullException(nameof(fileQueueContainer));
         _fileDistributorManager = fileDistributorManager ?? throw new ArgumentNullException(nameof(fileDistributorManager));
         _hostStringRetriver = hostStringRetriver ?? throw new ArgumentNullException(nameof(hostStringRetriver));
