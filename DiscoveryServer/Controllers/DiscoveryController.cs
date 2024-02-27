@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace DiscoveryServer.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("discover")]
     public class DiscoveryController : ControllerBase
     {
         private readonly ILogger<DiscoveryController> _logger;
