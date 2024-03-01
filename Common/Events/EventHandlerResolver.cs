@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 
 namespace Common.Events
 
@@ -8,13 +9,13 @@ namespace Common.Events
     {
         private readonly ILogger<EventHandlerResolver> _logger;
         private readonly IServiceProvider _serviceProvider;
-        private readonly IDictionary<string, IEventHandler> _eventHandlerMap;
+        private readonly ConcurrentDictionary<string, IEventHandler> _eventHandlerMap;
 
         public EventHandlerResolver(ILogger<EventHandlerResolver> logger, IServiceProvider serviceProvider)
         {
             _logger = logger;
             _serviceProvider = serviceProvider;
-            _eventHandlerMap = new Dictionary<string, IEventHandler>();
+            _eventHandlerMap = new ConcurrentDictionary<string, IEventHandler>();
         }
 
         public IEventHandler ResolveHandlerFor(EventBase e)

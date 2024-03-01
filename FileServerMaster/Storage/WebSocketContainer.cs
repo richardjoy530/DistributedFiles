@@ -1,4 +1,5 @@
 ﻿using Common;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Net.WebSockets;
@@ -7,12 +8,12 @@ namespace FileServerMaster.Storage
 {
     public class WebSocketContainer : IWebSocketContainer
     {
-        private readonly IDictionary<HostString, WebSocket> _sockets;
+        private readonly ConcurrentDictionary<HostString, WebSocket> _sockets;
         private readonly ILogger<WebSocketContainer> _logger;
 
         public WebSocketContainer(ILogger<WebSocketContainer> logger)
         {
-            _sockets = new Dictionary<HostString, WebSocket>();
+            _sockets = new ConcurrentDictionary<HostString, WebSocket>();
             _logger = logger;
         }
 
@@ -31,15 +32,6 @@ namespace FileServerMaster.Storage
                 }
                 (ReciveResult, Message) = await ws.ReadAsync();
             }
-        }
-
-        public void CloseWebSocketAsync()
-        {
-            Process(ws =>
-            {
-                _logger.LogInformation($"Closing WS: {ws.GetHashCode}"); // use events
-                ws.Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None).ContinueWith((_) => new Task(ws.Socket.Dispose));
-            });
         }
 
         public void Process(Action<(HostString Host, WebSocket Socket)> excecuter)
@@ -72,7 +64,7 @@ namespace FileServerMaster.Storage
                 if (_sockets.TryGetValue(host, out var ws))
                 {
                     ws?.Dispose();
-                    _sockets.Remove(host);
+                    _sockets.Remove(host, out _);
                     _logger.LogInformation("[SocketContainer] removed \"{host}\" from socket container", host);
                 }
             }
