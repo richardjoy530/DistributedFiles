@@ -60,7 +60,11 @@ public abstract partial class Program
         }
 
         var sm = app.Services.GetRequiredService<ISocketManager>();
-        sm.EstablishConnection(cts.Token);
+
+        // establish connection only when server started running
+        app.Lifetime.ApplicationStarted.Register(() => sm.EstablishConnection(cts.Token));
+
+        app.Lifetime.ApplicationStopping.Register(cts.Cancel);
 
         app.MapControllers();
 

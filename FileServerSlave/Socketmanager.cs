@@ -12,6 +12,8 @@ public class SocketManager : ISocketManager
     private readonly IHostStringRetriver _hostStringRetriver;
     private readonly HostString _hostString;
     private readonly bool _secure;
+    private readonly int _retryInSeconds;
+    private const int DefautRetryInSeconds = 5;
 
     public SocketManager(ILogger<SocketManager> logger, IEventDispatcher eventQueueManager, IConfiguration configuration, IHostStringRetriver slaveHostStringRetriver)
     {
@@ -20,7 +22,9 @@ public class SocketManager : ISocketManager
         _eventDispatcher = eventQueueManager ?? throw new ArgumentNullException(nameof(eventQueueManager));
         _hostStringRetriver = slaveHostStringRetriver ?? throw new ArgumentNullException(nameof(slaveHostStringRetriver));
 
-        _ = bool.TryParse(configuration["UseHttps"], out _secure);
+        _retryInSeconds = int.TryParse(configuration["RetryInSeconds"], out _retryInSeconds) ? _retryInSeconds : DefautRetryInSeconds;
+        _secure = bool.TryParse(configuration["UseHttps"], out _secure) ? _secure : default;
+
         if (_secure)
         {
             _hostString = new HostString(configuration["FileServerMasterHttps"]!);
@@ -33,15 +37,15 @@ public class SocketManager : ISocketManager
         _logger.LogDebug("configured master host address is \"{host}\"", _hostString);
     }
 
-    public async void EstablishConnection(CancellationToken token)
+    public async void EstablishConnection(CancellationToken ct)
     {
-        await Task.Delay(1000 * 5);
-        do
+        _logger.LogInformation("[Connection] starting socket listener");
+        while (!ct.IsCancellationRequested)
         {
-            await Listen(token);
-            _logger.LogInformation("[Connection] trying to reconnect after 5 seconds");
-            await Task.Delay(1000 * 5); // wait for 5 seconds
-        } while (true);
+            await Listen(ct);
+            _logger.LogInformation("[Connection] trying to reconnect after \"{}\" seconds", _retryInSeconds);
+            await Task.Delay(1000 * _retryInSeconds);
+        }
     }
 
     private async Task Listen(CancellationToken ct)
@@ -49,6 +53,7 @@ public class SocketManager : ISocketManager
         ClientWebSocket? ws = null;
         try
         {
+            var hoststrings = string.Join(';', _hostStringRetriver.GetLocalFileServerHosts());
             ws = new ClientWebSocket();
 
             var wsscheme = _secure ? "wss" : "ws";
@@ -59,7 +64,6 @@ public class SocketManager : ISocketManager
             _logger.LogInformation("[Connection] connection established to \"{wsuri}\"", wsuri);
 
             await ws.WriteAsync("ping", ct);
-            var hoststrings = string.Join(';', _hostStringRetriver.GetLocalFileServerHosts());
             await ws.WriteAsync($"slave server hosted at: \"{hoststrings}\"", ct);
 
             var (ReciveResult, Message) = await ws.ReadAsync(ct);

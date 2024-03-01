@@ -21,7 +21,14 @@ namespace Common
         public HostString[] GetLocalFileServerHosts()
         {
             var host = Dns.GetHostEntry(Dns.GetHostName()).AddressList[1].MapToIPv4().ToString();
-            var ports = _server.Features.Get<IServerAddressesFeature>()!.Addresses.Select(a => new Uri(a).Port).ToArray();
+            var addresses = _server.Features.Get<IServerAddressesFeature>()!.Addresses;
+            if (addresses.Count == 0)
+            {
+                _logger.LogWarning("attempted to retrive file-server address before it was hosted");
+                throw new InvalidOperationException();
+            }
+
+            var ports = addresses.Select(a => new Uri(a).Port).ToArray();
 
             var hoststrings = new HostString[ports.Length];
 
