@@ -31,7 +31,7 @@ namespace FileServerSlave.Files
             var filePath = Path.Combine(_distributedFolder, filename);
             if (File.Exists(filePath))
             {
-                var fs = new FileStream(filePath, FileMode.Open);
+                var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
 
                 _ = new FileExtensionContentTypeProvider().TryGetContentType(filePath, out var contentType);
                 

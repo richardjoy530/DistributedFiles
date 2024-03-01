@@ -71,6 +71,7 @@ namespace FileServerMaster.Controllers
             if (request.AvailableFileNames.Any(sf => !tablefilesold.Contains(sf)))
             {
                 // requesting checking to all slaves except this one
+                // todo only send checkin to slaves that doesnt have this file
                 _eventDispatcher.FireEvent(new RequestCheckInEvent([new HostString(request.SlaveHostStrings.First())], true));
             }
 
