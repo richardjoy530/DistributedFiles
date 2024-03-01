@@ -17,22 +17,21 @@ namespace FileServerSlave.Files
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        // need to optimize this endpoints. use stream.
         [HttpGet("{filename}")]
-        public FileData? DownLoadFile(string filename)
+        public ActionResult? DownLoadFile(string filename)
         {
             filename = HttpUtility.UrlDecode(filename);
-            var file = _fileManager.GetFile(filename);
-            if (file == null)
+            var result = _fileManager.GetFile(filename);
+            if (result.FileStream == null)
             {
-                _logger.LogWarning("\"{}\" was not present in the file container", filename);
-                return null;
+                _logger.LogWarning("\"{}\" was not present in the result container", filename);
+                return NoContent();
             }
 
             var ip = HttpContext.Connection.RemoteIpAddress!.MapToIPv4().ToString();
             var remotehost = new HostString(ip, HttpContext.Connection.RemotePort);
             _logger.LogInformation("[FileDownload] \"{}\" downloaded \"{}\"", remotehost, filename);
-            return file;
+            return File(result.FileStream, result.ContentType, filename);
         }
     }
 }

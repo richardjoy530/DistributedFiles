@@ -3,6 +3,8 @@ using Common.Proxy.Controllers;
 using FileServerSlave.Events;
 using FileServerSlave.Files;
 using FileServerSlave.Interceptor;
+using Microsoft.Extensions.Hosting;
+using static System.Net.WebRequestMethods;
 
 namespace FileServerSlave.EventHandlers
 {
@@ -38,29 +40,42 @@ namespace FileServerSlave.EventHandlers
                 return;
             }
 
-            var fileController = ApiInterceptor.GetController<IFileController>(de.HostString, _secure);
-
-            try
+            var url = new UriBuilder()
             {
-                var resp = fileController.DownLoadFile(de.FileName);
+                Scheme = _secure ? Uri.UriSchemeHttps : Uri.UriSchemeHttp,
+                Host = de.HostString.Host,
+                Port = de.HostString.Port ?? default,
+                Path = $"file\\{de.FileName}"
+            }.Uri;
 
-                if (resp is null)
-                {
-                    _logger.LogWarning("download \"{}\" from \"{HostString}\" returned null", de.FileName, de.HostString);
-                }
-                else
-                {
-                    _fileManager.SaveFile(resp);
-                }
-
-                var ce = new CheckInEvent();
-                _eventDispatcher.FireEvent(ce);
-            }
-            catch (Exception ex)
+            _ = Task.Run(async () =>
             {
-                _logger.LogError(ex.Message);
-                _logger.LogTrace(new EventId(0), ex, ex.Message);
-            }
+                try
+                {
+                    var client = new HttpClient();
+                    var stream = await client.GetStreamAsync(url);
+
+                    //if (stream.Length == 0)
+                    //{
+                    //    _logger.LogWarning("download \"{}\" from \"{HostString}\" returned null", de.FileName, de.HostString);
+                    //    return;
+                    //}
+
+                    await _fileManager.SaveFile(stream!, de.FileName);
+
+                    stream.Close();
+                    stream.Dispose();
+                    client.Dispose();
+
+                    var ce = new CheckInEvent();
+                    _eventDispatcher.FireEvent(ce);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.Message);
+                    _logger.LogTrace(new EventId(0), ex, ex.Message);
+                }
+            });
         }
     }
 }

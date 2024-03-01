@@ -6,6 +6,6 @@ namespace Common.Proxy.Controllers
     {
         [HttpGet]
         [Route("file/{filename}")]
-        FileData? DownLoadFile(string filename);
+        ActionResult? DownLoadFile(string filename);
     }
 }

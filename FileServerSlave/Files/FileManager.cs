@@ -1,5 +1,7 @@
 ﻿using Common;
 using Common.Proxy.Controllers;
+using Microsoft.AspNetCore.StaticFiles;
+using System.Net.Mime;
 
 namespace FileServerSlave.Files
 {
@@ -24,30 +26,33 @@ namespace FileServerSlave.Files
             return Directory.EnumerateFiles(_distributedFolder).Select(f => f.Split('\\').Last()).ToArray();
         }
 
-        public FileData? GetFile(string filename)
+        public (FileStream? FileStream, string ContentType) GetFile(string filename)
         {
             var filePath = Path.Combine(_distributedFolder, filename);
             if (File.Exists(filePath))
             {
-                using var stream = File.OpenRead(filePath);
-                var filedata = new FileData { ContentBase64 = stream.GetBytes(), FileName = filename };
-                return filedata;
+                var fs = new FileStream(filePath, FileMode.Open);
+
+                _ = new FileExtensionContentTypeProvider().TryGetContentType(filePath, out var contentType);
+                
+                return (fs, contentType ?? string.Empty);
             }
 
-            return null;
+            return (null, string.Empty);
         }
 
-        public async Task SaveFile(FileData file)
+        public async Task SaveFile(Stream stream, string fileName)
         {
-            using var stream = new MemoryStream(file.ContentBase64.Base64Decode());
-
             if (!Directory.Exists(_distributedFolder))
             {
                 Directory.CreateDirectory(_distributedFolder);
             }
 
-            using var fileStream = new FileStream(Path.Combine(_distributedFolder, file.FileName), FileMode.Create);
+            var fileStream = new FileStream(Path.Combine(_distributedFolder, fileName), FileMode.Create);
             await stream.CopyToAsync(fileStream);
+            await fileStream.FlushAsync();
+            fileStream.Close();
+            fileStream.Dispose();
         }
     }
 }

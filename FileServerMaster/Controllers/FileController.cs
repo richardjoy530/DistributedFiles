@@ -33,10 +33,10 @@ public class FileController : ControllerBase, IMasterFileController, IFileContro
     }
 
     [HttpPost]
-    public void UploadAsync(IFormFile file)
+    public async Task UploadAsync(IFormFile file)
     {
-        _logger.LogInformation("[FileUpload] recived file \"{filename}\"", file.FileName);
-        _fileContainer.Add(file);
+        _logger.LogInformation("[FileUpload] recived result \"{filename}\"", file.FileName);
+        await _fileContainer.AddFileAsync(file.OpenReadStream(), file.FileName, file.ContentType);
 
         var masterHost = _hostStringRetriver.GetLocalFileServerHosts().First();
         _fileDistributorManager.UpdateFileAvailablity(masterHost, [file.FileName]);
@@ -45,19 +45,19 @@ public class FileController : ControllerBase, IMasterFileController, IFileContro
     }
 
     [HttpGet("{filename}")]
-    public FileData? DownLoadFile(string filename)
+    public ActionResult? DownLoadFile(string filename)
     {
         filename = HttpUtility.UrlDecode(filename);
-        var file = _fileContainer.Get(filename);
-        if (file == null)
+        var result = _fileContainer.GetFile(filename);
+        if (result.FileStream == null)
         {
-            _logger.LogWarning("\"{}\" was not present in the file container", filename);
-            return null;
+            _logger.LogWarning("\"{}\" was not present in the result container", filename);
+            return NoContent();
         }
 
         var ip = HttpContext.Connection.RemoteIpAddress!.MapToIPv4().ToString();
         var remotehost = new HostString(ip, HttpContext.Connection.RemotePort);
         _logger.LogInformation("[FileDownload] \"{}\" downloaded \"{}\"", remotehost, filename);
-        return file;
+        return File(result.FileStream, result.ContentType, filename);
     }
 }
