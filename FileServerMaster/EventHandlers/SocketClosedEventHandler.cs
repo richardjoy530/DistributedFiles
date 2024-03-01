@@ -25,6 +25,12 @@ namespace FileServerMaster.EventHandlers
                 return;
             }
 
+            if (sce.SlaveHostAddress == null || sce.SlaveHostAddress.Length == 0)
+            {
+                _logger.LogWarning("cannot handle event since the requested address are empty or null");
+                return;
+            }
+
             _webSocketContainer.DisposeAndRemove(sce.SlaveHostAddress);
             _fileDistributorManager.RemoveHosting(sce.SlaveHostAddress);
 

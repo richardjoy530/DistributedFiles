@@ -59,6 +59,9 @@ public abstract class Program
 
         app.MapControllers();
 
+        var ed = app.Services.GetRequiredService<IEventDispatcher>();
+        app.Lifetime.ApplicationStopping.Register(() => ed.FireEvent(new DisconnectSlaveEvent()));
+
         app.Run();
     }
 }
