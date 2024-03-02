@@ -4,7 +4,7 @@
     public enum StunMessageFlags: byte
     {
         None,
-        ChangeAddress,
+        ChangeIp,
         ChangePort,
         ChangeBoth,
         ResponseAddress,

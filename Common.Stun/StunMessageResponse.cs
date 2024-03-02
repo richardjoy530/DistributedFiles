@@ -2,32 +2,45 @@
 
 namespace Common.Stun
 {
-    public class StunMessageResponse // todo pass in the guid from request
+    public class StunMessageResponse
     {
-        public readonly IPAddress MappedAddress;
+        public readonly IPEndPoint ClientReflexiveEndpoint;
 
-        public StunMessageResponse(IPAddress mappedAddress)
+        public readonly Guid RefrenceId;
+
+        public StunMessageResponse(IPEndPoint mappedAddress, Guid refrenceId)
         {
-            MappedAddress = mappedAddress;
+            ClientReflexiveEndpoint = mappedAddress;
+            RefrenceId = refrenceId;
         }
 
         public static StunMessageResponse Parse(byte[] bytes) 
         {
-            var len = BitConverter.ToInt32(bytes.AsSpan(0, 4));
+            var guid = new Guid(bytes.AsSpan(8, 16));
+            Console.WriteLine($"id: \"{guid}\"");
 
-            var ip = new IPAddress(bytes.AsSpan(4, len));
+            var port = BitConverter.ToInt32(bytes.AsSpan(4, 4));
+            var ip_len = BitConverter.ToInt32(bytes.AsSpan(0, 4));
 
-            return new StunMessageResponse(ip);
+            var ipaddr = new IPAddress(bytes.AsSpan(24, ip_len));
+            var endpoint = new IPEndPoint(ipaddr, port);
+            Console.WriteLine($"response_endpoint: \"{ipaddr}\":\"{port}\"");
+
+            return new StunMessageResponse(endpoint, guid);
         }
 
         public byte[] GetBytes()
         {
             var bytes = new byte[1024];
 
-            MappedAddress.TryWriteBytes(bytes.AsSpan(4), out var len);
+            ClientReflexiveEndpoint.Address.TryWriteBytes(bytes.AsSpan(24), out var ip_len);
 
-            BitConverter.GetBytes(len).CopyTo(bytes, 0);
-            return bytes.AsSpan(0, 4 + len).ToArray();
+            BitConverter.GetBytes(ip_len).CopyTo(bytes, 0);
+            RefrenceId.ToByteArray().CopyTo(bytes.AsSpan(8, 16));
+            BitConverter.GetBytes(ClientReflexiveEndpoint.Port).CopyTo(bytes, 4);
+
+            var resp_len = 4 + 4 + 16 + ip_len;
+            return bytes.AsSpan(0, resp_len).ToArray();
         }
     }
 }
