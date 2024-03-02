@@ -11,7 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "Common\Common.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileServerMaster.Web", "FileServerMaster.Web\FileServerMaster.Web.csproj", "{7D59B0BB-1593-4E3C-B18C-64D8D0A32AEE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscoveryServer", "DiscoveryServer\DiscoveryServer.csproj", "{52A2ABE6-7598-4C3D-961B-1EB4CBEF11D7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StunServer", "StunServer\StunServer.csproj", "{52A2ABE6-7598-4C3D-961B-1EB4CBEF11D7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StunClient", "StunClient\StunClient.csproj", "{F4167FFE-C052-4341-9FC5-27A97646D7D0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{52A2ABE6-7598-4C3D-961B-1EB4CBEF11D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{52A2ABE6-7598-4C3D-961B-1EB4CBEF11D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{52A2ABE6-7598-4C3D-961B-1EB4CBEF11D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4167FFE-C052-4341-9FC5-27A97646D7D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4167FFE-C052-4341-9FC5-27A97646D7D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4167FFE-C052-4341-9FC5-27A97646D7D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4167FFE-C052-4341-9FC5-27A97646D7D0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
