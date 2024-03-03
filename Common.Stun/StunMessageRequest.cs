@@ -41,13 +41,13 @@ namespace Common.Stun
         public static StunMessageRequest Parse(byte[] bytes)
         {
             var guid = new Guid(bytes.AsSpan(0, 16));
-            Console.WriteLine($"id: \"{guid}\"");
+            Logger.Log($"id: \"{guid}\"");
 
             var change_addr_flag = (StunMessageFlags)bytes[16];
-            Console.WriteLine($"change_address: \"{change_addr_flag}\"");
+            Logger.Log($"change_address: \"{change_addr_flag}\"");
 
             var resp_addr_flag = (StunMessageFlags)bytes[17];
-            Console.WriteLine($"resp_addr_flag: \"{resp_addr_flag}\"");
+            Logger.Log($"resp_addr_flag: \"{resp_addr_flag}\"");
 
             if (resp_addr_flag == StunMessageFlags.ResponseAddress)
             {
@@ -55,7 +55,7 @@ namespace Common.Stun
                 var port = BitConverter.ToInt32(bytes.AsSpan(22, 4));
                 var ipaddr = new IPAddress(bytes.AsSpan(26, ip_len));
                 var ip_endpoint = new IPEndPoint(ipaddr, port);
-                Console.WriteLine($"response_endpoint: \"{ipaddr}\":\"{port}\"");
+                Logger.Log($"response_endpoint: \"{ipaddr}\":\"{port}\"");
 
                 return new StunMessageRequest(change_addr_flag, ip_endpoint, guid);
             }

@@ -8,23 +8,23 @@ namespace Common.Stun
 
         public readonly Guid RefrenceId;
 
-        public StunMessageResponse(IPEndPoint mappedAddress, Guid refrenceId)
+        public StunMessageResponse(IPEndPoint reflexiveAddress, Guid refrenceId)
         {
-            ClientReflexiveEndpoint = mappedAddress;
+            ClientReflexiveEndpoint = reflexiveAddress;
             RefrenceId = refrenceId;
         }
 
         public static StunMessageResponse Parse(byte[] bytes) 
         {
             var guid = new Guid(bytes.AsSpan(8, 16));
-            Console.WriteLine($"id: \"{guid}\"");
+            Logger.Log($"id: \"{guid}\"");
 
             var port = BitConverter.ToInt32(bytes.AsSpan(4, 4));
             var ip_len = BitConverter.ToInt32(bytes.AsSpan(0, 4));
 
             var ipaddr = new IPAddress(bytes.AsSpan(24, ip_len));
             var endpoint = new IPEndPoint(ipaddr, port);
-            Console.WriteLine($"response_endpoint: \"{ipaddr}\":\"{port}\"");
+            Logger.Log($"response_endpoint: \"{ipaddr}\":\"{port}\"");
 
             return new StunMessageResponse(endpoint, guid);
         }

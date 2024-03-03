@@ -6,48 +6,65 @@ namespace StunServer
 {
     internal class Program
     {
-        private const int PrimaryPort = 6666;
-        private const int SecondaryPort = 7777;
+        private const int PrimaryUdpPort = 6666;
+        private const int SecondaryUdpPort = 7777;
+
+        private const int PrimaryTcpPort = 8888;
+        private const int SecondaryTcpPort = 9999;
 
         public static void Main(string[] args)
         {
             var server_ip = Dns.GetHostEntry(Dns.GetHostName()).AddressList[1];
-            Console.WriteLine($"stun server running on: \"{server_ip}\"");
+            foreach (var ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
+            {
+                Logger.Log($"available ip: \"{ip}\"");
+            }
+
+            Logger.Log($"stun server running on: \"{server_ip}\"");
             var remote_server_ip = IPAddress.Parse(args[0]);
-            Console.WriteLine($"remote stun server on: \"{server_ip}\"");
+            Logger.Log($"remote stun server on: \"{server_ip}\"");
 
-            var primary = Run(true, server_ip, remote_server_ip);
-            var secondary = Run(false, server_ip, remote_server_ip);
+            var primary_udp_server = new Thread(() => RunUdpTraversal(true, server_ip, remote_server_ip));
+            var secondary_udp_server = new Thread(() => RunUdpTraversal(false, server_ip, remote_server_ip));
 
-            Task.WaitAll(primary, secondary);
+            var primary_tcp_server = new Thread(() => RunTcpTraversal(true, server_ip, remote_server_ip));
+            var secondary_tcp_server = new Thread(() => RunTcpTraversal(false, server_ip, remote_server_ip));
+
+            primary_udp_server.Start();
+            secondary_udp_server.Start();
         }
 
-        private static async Task Run(bool is_primary, IPAddress server_ip, IPAddress remote_server_ip)
+        private static void RunTcpTraversal(bool is_primary, IPAddress server_ip, IPAddress remote_server_ip)
         {
-            // container variable for saving the stun client's endpoint after reciving message
-            var client_ip_endpoint = new IPEndPoint(IPAddress.Any, 0);
 
+        }
+
+        private static void RunUdpTraversal(bool is_primary, IPAddress server_ip, IPAddress remote_server_ip)
+        {
             // endpoint that host's stun server on this process
-            var server_ip_endpoint_1 = new IPEndPoint(server_ip, is_primary ? PrimaryPort : SecondaryPort);
-            var server_ip_endpoint_2 = new IPEndPoint(server_ip, is_primary ? SecondaryPort : PrimaryPort);
+            var server_ip_endpoint_1 = new IPEndPoint(server_ip, is_primary ? PrimaryUdpPort : SecondaryUdpPort);
+            var server_ip_endpoint_2 = new IPEndPoint(server_ip, is_primary ? SecondaryUdpPort : PrimaryUdpPort);
 
             // stun protocal needs 2 servers with different ips, these are the remote stun server
-            var remote_server_ip_endpoint_1 = new IPEndPoint(remote_server_ip, is_primary ? PrimaryPort : SecondaryPort);
-            var remote_server_ip_endpoint_2 = new IPEndPoint(remote_server_ip, is_primary ? SecondaryPort : PrimaryPort);
+            var remote_server_ip_endpoint_1 = new IPEndPoint(remote_server_ip, is_primary ? PrimaryUdpPort : SecondaryUdpPort);
+            var remote_server_ip_endpoint_2 = new IPEndPoint(remote_server_ip, is_primary ? SecondaryUdpPort : PrimaryUdpPort);
 
             // creating a UPD socket
             var sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             sock.Bind(server_ip_endpoint_1);
-            Console.WriteLine($"stun binding sucucssfull on: \"{server_ip_endpoint_1.Address}\":\"{server_ip_endpoint_1.Port}\"");
+            Logger.Log($"stun binding sucucssfull on: \"{server_ip_endpoint_1.Address}\":\"{server_ip_endpoint_1.Port}\"");
 
             while (true)
             {
+                Logger.Log("-----------------------------------");
                 var buffer = new byte[1024];
 
+                // container variable for saving the stun client's endpoint after reciving message
+                EndPoint client_endpoint = new IPEndPoint(IPAddress.Any, 0);
+
                 // listening for a StunMessageRequest. this can come from a stun client or anoter remote stun server.
-                //var client_endpoint = (EndPoint)client_ip_endpoint;
-                await sock.ReceiveFromAsync(new ArraySegment<byte>(buffer), client_ip_endpoint); // NOT WORKING .. not able to retrive client endpoint
-                Console.WriteLine($"recived message from endpoint: \"{client_ip_endpoint!.Address}\":\"{client_ip_endpoint.Port}\"");
+                sock.ReceiveFrom(new ArraySegment<byte>(buffer), ref client_endpoint);
+                Logger.Log($"recived message from endpoint: \"{(client_endpoint as IPEndPoint)!.Address}\":\"{(client_endpoint as IPEndPoint)!.Port}\"");
 
                 var msg = StunMessageRequest.Parse(buffer);
 
@@ -55,41 +72,55 @@ namespace StunServer
                 {
                     case StunMessageFlags.None:
                         {
-                            var resp = new StunMessageResponse(client_ip_endpoint!, msg.RefrenceId);
-                            var buff = resp.GetBytes();
+                            if (msg.ResponseEndpoint != null )
+                            {
+                                var resp = new StunMessageResponse(msg.ResponseEndpoint, msg.RefrenceId);
+                                var buff = resp.GetBytes();
 
-                            Console.WriteLine($"sending message to client endpoint: \"{client_ip_endpoint!.Address}\":\"{client_ip_endpoint.Port}\"");
-                            await sock.SendToAsync(buff, client_ip_endpoint);
+                                Logger.Log($"sending message to client endpoint: \"{msg.ResponseEndpoint.Address}\":\"{msg.ResponseEndpoint.Port}\"");
+
+                                sock.SendTo(buff, msg.ResponseEndpoint);
+                            }
+                            else
+                            {
+                                var resp = new StunMessageResponse((client_endpoint as IPEndPoint)!, msg.RefrenceId);
+                                var buff = resp.GetBytes();
+
+                                Logger.Log($"sending message to client endpoint: \"{(client_endpoint as IPEndPoint)!.Address}\":\"{(client_endpoint as IPEndPoint)!.Port}\"");
+
+                                sock.SendTo(buff, (client_endpoint as IPEndPoint)!);
+                            }
+
                             break;
                         }
 
                     case StunMessageFlags.ChangeIp:
                         {
-                            var req = new StunMessageRequest(StunMessageFlags.None, client_ip_endpoint, msg.RefrenceId);
+                            var req = new StunMessageRequest(StunMessageFlags.None, (client_endpoint as IPEndPoint)!, msg.RefrenceId);
                             var buff = req.GetBytes();
 
-                            Console.WriteLine($"sending message to stun server endpoint: \"{remote_server_ip_endpoint_1.Address}\":\"{remote_server_ip_endpoint_1.Port}\"");
-                            await sock.SendToAsync(buff, remote_server_ip_endpoint_1);
+                            Logger.Log($"sending message to stun server endpoint: \"{remote_server_ip_endpoint_1.Address}\":\"{remote_server_ip_endpoint_1.Port}\"");
+                            sock.SendTo(buff, remote_server_ip_endpoint_1);
                             break;
                         }
 
                     case StunMessageFlags.ChangePort:
                         {
-                            var req = new StunMessageRequest(StunMessageFlags.None, client_ip_endpoint, msg.RefrenceId);
+                            var req = new StunMessageRequest(StunMessageFlags.None, (client_endpoint as IPEndPoint)!, msg.RefrenceId);
                             var buff = req.GetBytes();
 
-                            Console.WriteLine($"sending message to stun server endpoint: \"{server_ip_endpoint_2.Address}\":\"{server_ip_endpoint_2.Port}\"");
-                            await sock.SendToAsync(buff, server_ip_endpoint_2);
+                            Logger.Log($"sending message to stun server endpoint: \"{server_ip_endpoint_2.Address}\":\"{server_ip_endpoint_2.Port}\"");
+                            sock.SendTo(buff, server_ip_endpoint_2);
                             break;
                         }
 
                     case StunMessageFlags.ChangeBoth:
                         {
-                            var req = new StunMessageRequest(StunMessageFlags.None, client_ip_endpoint, msg.RefrenceId);
+                            var req = new StunMessageRequest(StunMessageFlags.None, (client_endpoint as IPEndPoint)!, msg.RefrenceId);
                             var buff = req.GetBytes();
 
-                            Console.WriteLine($"sending message to stun server endpoint: \"{remote_server_ip_endpoint_2.Address}\":\"{remote_server_ip_endpoint_2.Port}\"");
-                            await sock.SendToAsync(buff, remote_server_ip_endpoint_2);
+                            Logger.Log($"sending message to stun server endpoint: \"{remote_server_ip_endpoint_2.Address}\":\"{remote_server_ip_endpoint_2.Port}\"");
+                            sock.SendTo(buff, remote_server_ip_endpoint_2);
                             break;
                         }
                 }
