@@ -4,6 +4,7 @@ using FileServerMaster.Web.Controllers;
 using FileServerSlave.Events;
 using FileServerSlave.Files;
 using FileServerSlave.Interceptor;
+using FileServerSlave.Utils;
 
 namespace FileServerSlave.EventHandlers
 {
@@ -15,24 +16,20 @@ namespace FileServerSlave.EventHandlers
         private readonly IHostStringRetriver _hostStringRetriver;
         private readonly IFileManager _fileManager;
 
-        public CheckInEventHandler(ILogger<CheckInEventHandler> logger, IEventDispatcher eventDispatcher, IConfiguration configuration, IHostStringRetriver slaveHostStringRetriver, IFileManager fileManager)
+        public CheckInEventHandler(ILogger<CheckInEventHandler> logger,
+                                   IEventDispatcher eventDispatcher,
+                                   IHostStringRetriver slaveHostStringRetriver,
+                                   IFileManager fileManager,
+                                   IMasterServerRetriver masterServerRetriver)
         {
-            ArgumentNullException.ThrowIfNull(configuration);
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _eventDispatcher = eventDispatcher ?? throw new ArgumentNullException(nameof(eventDispatcher));
             _hostStringRetriver = slaveHostStringRetriver ?? throw new ArgumentNullException(nameof(slaveHostStringRetriver));
             _fileManager = fileManager ?? throw new ArgumentNullException(nameof(fileManager));
-
-            HostString masterHostString;
-            _ = bool.TryParse(configuration["UseHttps"], out var secure);
-            if (secure)
-            {
-                masterHostString = new HostString(configuration["FileServerMasterHttps"]!);
-            }
-            else
-            {
-                masterHostString = new HostString(configuration["FileServerMasterHttp"]!);
-            }
+            ArgumentNullException.ThrowIfNull(nameof(masterServerRetriver));
+            
+            var secure = masterServerRetriver.Secure;
+            var masterHostString = masterServerRetriver.GetMasterHostString();
 
             _logger.LogDebug("configured master host address is \"{host}\"", masterHostString);
             _checkInController = ApiInterceptor.GetController<ICheckInController>(masterHostString, secure);

@@ -1,5 +1,4 @@
 ﻿using Common.Stun;
-using System;
 using System.Net;
 using System.Net.Sockets;
 
@@ -7,10 +6,10 @@ namespace StunClient
 {
     internal class Program
     {
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         {
-            Logger.Log("--tcp--");
-            await TestTcpHolePunching();
+            //Logger.Log("--tcp--");
+            //await TestTcpHolePunching();
             Logger.Log("--udp--");
             TestUdpHolePunching();
         }
@@ -47,10 +46,15 @@ namespace StunClient
             var sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             sock.Bind(client_ip_endpoint);
 
-            SendUdpMessage(sock, server_ip_endpoint_11, StunMessageFlags.None);
-            SendUdpMessage(sock, server_ip_endpoint_12, StunMessageFlags.None);
-            SendUdpMessage(sock, server_ip_endpoint_21, StunMessageFlags.None);
-            SendUdpMessage(sock, server_ip_endpoint_22, StunMessageFlags.None);
+            var tasks = new List<Task>
+            {
+                Task.Run(() => SendUdpMessage(sock, server_ip_endpoint_11, StunMessageFlags.None)),
+                Task.Run(() => SendUdpMessage(sock, server_ip_endpoint_12, StunMessageFlags.ChangePort)),
+                Task.Run(() => SendUdpMessage(sock, server_ip_endpoint_21, StunMessageFlags.None)),
+                Task.Run(() => SendUdpMessage(sock, server_ip_endpoint_22, StunMessageFlags.ChangePort))
+            };
+
+            Task.WaitAll([..tasks]);
         }
 
         private static async Task SendTcpMessage(IPEndPoint client_ip_endpoint, EndPoint server_ip_endpoint, StunMessageFlags flags)
@@ -66,6 +70,7 @@ namespace StunClient
             await sock.ReceiveAsync(new ArraySegment<byte>(buffer));
             _ = StunMessageResponse.Parse(buffer);
 
+            //await sock.DisconnectAsync(true);
             sock.Shutdown(SocketShutdown.Both);
             sock.Close();
         }

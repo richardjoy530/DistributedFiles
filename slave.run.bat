@@ -2,5 +2,5 @@
 
 cls
 FOR /L %%A IN (1,1,%1) DO (
-start cmd.exe /k dotnet run --project FileServerSlave --urls http://0.0.0.0:501%%A --save C:\Distributed\%%A\
+start cmd.exe /k dotnet run --project FileServerSlave --urls http://0.0.0.0:501%%A --save C:\DistributedFiles\%%A\
 )

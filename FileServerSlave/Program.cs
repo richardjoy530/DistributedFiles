@@ -3,7 +3,7 @@ using Common.Events;
 using FileServerSlave.EventHandlers;
 using FileServerSlave.Events;
 using FileServerSlave.Files;
-using Microsoft.Extensions.Options;
+using FileServerSlave.Utils;
 
 namespace FileServerSlave;
 
@@ -36,9 +36,10 @@ public abstract partial class Program
         builder.Services.AddKeyedSingleton<IEventHandler, CheckInEventHandler>(nameof(CheckInEvent));
         builder.Services.AddKeyedSingleton<IEventHandler, DownLoadEventHandler>(nameof(DownloadEvent));
 
-        builder.Services.AddSingleton<IHostStringRetriver, HostStringRetriver>();
         builder.Services.AddSingleton<IFileManager, FileManager>();
+        builder.Services.AddSingleton<IHostStringRetriver, HostStringRetriver>();
         builder.Services.AddSingleton<IDestinationLocator, DestinationLocator>();
+        builder.Services.AddSingleton<IMasterServerRetriver, MasterServerRetriver>();
 
         var app = builder.Build();
 
@@ -48,15 +49,21 @@ public abstract partial class Program
             app.UseSwagger();
             app.UseSwaggerUI();
         }
-        else
-        {
-            app.UseHttpsRedirection();
-        }
+        //else
+        //{
+        //    app.UseHttpsRedirection();
+        //}
 
         if (args.Contains("--save"))
         {
             var saveLocation = args[args.ToList().IndexOf("--save") + 1];
             app.Services.GetRequiredService<IDestinationLocator>().SetCustomLocation(saveLocation);
+        }
+
+        if (args.Contains("--master"))
+        {
+            var masterHostString = args[args.ToList().IndexOf("--master") + 1];
+            app.Services.GetRequiredService<IMasterServerRetriver>().SetCustomMasterHostString(new HostString(masterHostString));
         }
 
         var sm = app.Services.GetRequiredService<ISocketManager>();

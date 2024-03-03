@@ -38,7 +38,7 @@ public class FileController : ControllerBase, IMasterFileController, IFileContro
         _logger.LogInformation("[FileUpload] recived result \"{filename}\"", file.FileName);
         await _fileContainer.AddFileAsync(file.OpenReadStream(), file.FileName, file.ContentType);
 
-        var masterHost = _hostStringRetriver.GetLocalFileServerHosts().First();
+        var masterHost = new HostString(Request.Host.Host, HttpContext.Connection.LocalPort);
         _fileDistributorManager.UpdateFileAvailablity(masterHost, [file.FileName]);
 
         _eventDispatcher.FireEvent(new RequestCheckInEvent());

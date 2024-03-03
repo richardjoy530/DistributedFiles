@@ -1,6 +1,7 @@
 using Common;
 using Common.Events;
 using FileServerSlave.Events;
+using FileServerSlave.Utils;
 using System.Net.WebSockets;
 
 namespace FileServerSlave;
@@ -10,29 +11,25 @@ public class SocketManager : ISocketManager
     private readonly ILogger<SocketManager> _logger;
     private readonly IEventDispatcher _eventDispatcher;
     private readonly IHostStringRetriver _hostStringRetriver;
+    private readonly IMasterServerRetriver _masterServerRetriver;
     private readonly HostString _hostString;
     private readonly bool _secure;
     private readonly int _retryInSeconds;
-    private const int DefautRetryInSeconds = 5;
 
-    public SocketManager(ILogger<SocketManager> logger, IEventDispatcher eventQueueManager, IConfiguration configuration, IHostStringRetriver slaveHostStringRetriver)
+    public SocketManager(ILogger<SocketManager> logger,
+                         IEventDispatcher eventQueueManager,
+                         IHostStringRetriver slaveHostStringRetriver,
+                         IMasterServerRetriver masterServerRetriver)
     {
-        ArgumentNullException.ThrowIfNull(configuration);
+
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _eventDispatcher = eventQueueManager ?? throw new ArgumentNullException(nameof(eventQueueManager));
         _hostStringRetriver = slaveHostStringRetriver ?? throw new ArgumentNullException(nameof(slaveHostStringRetriver));
+        _masterServerRetriver = masterServerRetriver ?? throw new ArgumentNullException(nameof(masterServerRetriver));
 
-        _retryInSeconds = int.TryParse(configuration["RetryInSeconds"], out _retryInSeconds) ? _retryInSeconds : DefautRetryInSeconds;
-        _secure = bool.TryParse(configuration["UseHttps"], out _secure) ? _secure : default;
-
-        if (_secure)
-        {
-            _hostString = new HostString(configuration["FileServerMasterHttps"]!);
-        }
-        else
-        {
-            _hostString = new HostString(configuration["FileServerMasterHttp"]!);
-        }
+        _retryInSeconds = _masterServerRetriver.RetryInSeconds;
+        _secure = _masterServerRetriver.Secure;
+        _hostString = _masterServerRetriver.GetMasterHostString();
 
         _logger.LogDebug("configured master host address is \"{host}\"", _hostString);
     }

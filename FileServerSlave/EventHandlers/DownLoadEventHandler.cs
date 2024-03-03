@@ -1,10 +1,7 @@
 ﻿using Common.Events;
-using Common.Proxy.Controllers;
 using FileServerSlave.Events;
 using FileServerSlave.Files;
-using FileServerSlave.Interceptor;
-using Microsoft.Extensions.Hosting;
-using static System.Net.WebRequestMethods;
+using FileServerSlave.Utils;
 
 namespace FileServerSlave.EventHandlers
 {
@@ -15,14 +12,17 @@ namespace FileServerSlave.EventHandlers
         private readonly IFileManager _fileManager;
         private readonly bool _secure;
 
-        public DownLoadEventHandler(ILogger<DownLoadEventHandler> logger, IEventDispatcher eventDispatcher, IConfiguration configuration, IFileManager fileManager)
+        public DownLoadEventHandler(ILogger<DownLoadEventHandler> logger,
+                                    IEventDispatcher eventDispatcher,
+                                    IMasterServerRetriver masterServerRetriver,
+                                    IFileManager fileManager)
         {
-            ArgumentNullException.ThrowIfNull(configuration);
+            ArgumentNullException.ThrowIfNull(masterServerRetriver);
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _eventDispatcher = eventDispatcher ?? throw new ArgumentNullException(nameof(eventDispatcher));
             _fileManager = fileManager ?? throw new ArgumentNullException(nameof(fileManager));
 
-            _ = bool.TryParse(configuration["UseHttps"], out _secure);
+            _secure = masterServerRetriver.Secure;
         }
 
         public void HandleEvent(EventBase e)
@@ -54,12 +54,6 @@ namespace FileServerSlave.EventHandlers
                 {
                     var client = new HttpClient();
                     var stream = await client.GetStreamAsync(url);
-
-                    //if (stream.Length == 0)
-                    //{
-                    //    _logger.LogWarning("download \"{}\" from \"{HostString}\" returned null", de.FileName, de.HostString);
-                    //    return;
-                    //}
 
                     await _fileManager.SaveFile(stream!, de.FileName);
 

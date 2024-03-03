@@ -1,4 +1,4 @@
-﻿namespace FileServerSlave.Files
+﻿namespace FileServerSlave.Utils
 {
     public class DestinationLocator : IDestinationLocator
     {
@@ -26,6 +26,7 @@
                 _customDestinationFolder = customPath;
                 return true;
             }
+
             return false;
         }
 

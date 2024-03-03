@@ -45,10 +45,10 @@ public abstract class Program
             app.UseSwagger();
             app.UseSwaggerUI();
         }
-        else
-        {
-            app.UseHttpsRedirection();
-        }
+        //else
+        //{
+        //    app.UseHttpsRedirection();
+        //}
 
         var webSocketOptions = new WebSocketOptions()
         {

@@ -1,4 +1,4 @@
-﻿namespace FileServerSlave.Files
+﻿namespace FileServerSlave.Utils
 {
     public interface IDestinationLocator
     {
