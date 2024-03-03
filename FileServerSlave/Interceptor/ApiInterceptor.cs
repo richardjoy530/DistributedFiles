@@ -11,7 +11,7 @@ namespace FileServerSlave.Interceptor
 
         private ApiInterceptor(HostString host, bool https)
         {
-            _baseUri = new UriBuilder()
+            _baseUri = new UriBuilder
             {
                 Scheme = https ? Uri.UriSchemeHttps : Uri.UriSchemeHttp,
                 Host = host.Host,

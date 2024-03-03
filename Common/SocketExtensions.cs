@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Common
 {
-    public static class SocketExtentions
+    public static class SocketExtensions
     {
         public static async Task WriteAsync(this WebSocket ws, string message)
         {

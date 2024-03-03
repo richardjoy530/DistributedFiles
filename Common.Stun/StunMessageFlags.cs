@@ -1,7 +1,7 @@
 ﻿namespace Common.Stun
 {
     [Flags]
-    public enum StunMessageFlags: byte
+    public enum StunMessageFlags : byte
     {
         None,
         ChangeIp,

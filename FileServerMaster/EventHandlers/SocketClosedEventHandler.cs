@@ -25,7 +25,7 @@ namespace FileServerMaster.EventHandlers
                 return;
             }
 
-            if (sce.SlaveHostAddress == null || sce.SlaveHostAddress.Length == 0)
+            if (sce.SlaveHostAddress.Length == 0)
             {
                 _logger.LogWarning("cannot handle event since the requested address are empty or null");
                 return;
@@ -34,8 +34,8 @@ namespace FileServerMaster.EventHandlers
             _webSocketContainer.DisposeAndRemove(sce.SlaveHostAddress);
             _fileDistributorManager.RemoveHosting(sce.SlaveHostAddress);
 
-            var hoststrings = string.Join(';', sce.SlaveHostAddress);
-            _logger.LogInformation("[SocketClosedEvent] disposed and removed \"{}\"", hoststrings);
+            var hostStrings = string.Join(';', sce.SlaveHostAddress);
+            _logger.LogInformation("[SocketClosedEvent] disposed and removed \"{}\"", hostStrings);
         }
     }
 }

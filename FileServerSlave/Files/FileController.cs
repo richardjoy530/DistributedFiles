@@ -18,19 +18,19 @@ namespace FileServerSlave.Files
         }
 
         [HttpGet("{filename}")]
-        public ActionResult? DownLoadFile(string filename)
+        public ActionResult DownLoadFile(string filename)
         {
             filename = HttpUtility.UrlDecode(filename);
             var result = _fileManager.GetFile(filename);
             if (result.FileStream == null)
             {
-                _logger.LogWarning("\"{}\" was not present in the result container", filename);
+                _logger.LogWarning("\"{filename}\" was not present in the result container", filename);
                 return NoContent();
             }
 
             var ip = HttpContext.Connection.RemoteIpAddress!.MapToIPv4().ToString();
-            var remotehost = new HostString(ip, HttpContext.Connection.RemotePort);
-            _logger.LogInformation("[FileDownload] \"{}\" downloaded \"{}\"", remotehost, filename);
+            var remoteHost = new HostString(ip, HttpContext.Connection.RemotePort);
+            _logger.LogInformation("[FileDownload] \"{remoteHost}\" downloaded \"{filename}\"", remoteHost, filename);
             return File(result.FileStream, result.ContentType, filename);
         }
     }

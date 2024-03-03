@@ -6,10 +6,12 @@ namespace FileServerMaster.Storage
     {
         string[] GetAllFileNames();
 
-        HostString GetRetrivalHost(string fileName);
+        HostString GetRetrievalHost(string fileName);
+    
         void RemoveHosting(HostString[] slaveHostAddress);
+    
         void RemoveMaster(string fileName);
 
-        void UpdateFileAvailablity(HostString remoteHost, string[] availableFileNames);
+        void UpdateFileAvailability(HostString remoteHost, string[] availableFileNames);
     }
 }

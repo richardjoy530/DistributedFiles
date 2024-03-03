@@ -1,6 +1,4 @@
-﻿using Common.Proxy.Controllers;
-
-namespace FileServerSlave.Files
+﻿namespace FileServerSlave.Files
 {
     public interface IFileManager
     {

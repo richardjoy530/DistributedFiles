@@ -4,64 +4,65 @@ using FileServerMaster.EventHandlers;
 using FileServerMaster.Events;
 using FileServerMaster.Storage;
 
-namespace FileServerMaster;
-
-public abstract class Program
+namespace FileServerMaster
 {
-    public static void Main(string[] args)
+    public abstract class Program
     {
-        var builder = WebApplication.CreateBuilder(args);
-
-        builder.Logging.AddSimpleConsole(o =>
+        public static void Main(string[] args)
         {
-            o.SingleLine = true;
-            o.TimestampFormat = "HH:mm:ss:ffff ";
-        });
+            var builder = WebApplication.CreateBuilder(args);
 
-        // Add services to the container.
+            builder.Logging.AddSimpleConsole(o =>
+            {
+                o.SingleLine = true;
+                o.TimestampFormat = "HH:mm:ss:ffff";
+            });
 
-        builder.Services.AddControllers();
-        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-        builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
+            // Add services to the container.
 
-        builder.Services.AddSingleton<IFileContainer, FileContainer>();
-        builder.Services.AddSingleton<IWebSocketContainer, WebSocketContainer>();
-        builder.Services.AddSingleton<IFileDistributorManager, FileDistributorManager>();
-        builder.Services.AddSingleton<IHostStringRetriver, HostStringRetriver>();
+            builder.Services.AddControllers();
+            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
 
-        builder.Services.AddSingleton<IEventDispatcher, EventDispatcher>();
-        builder.Services.AddSingleton<IEventHandlerResolver, EventHandlerResolver>();
+            builder.Services.AddSingleton<IFileContainer, FileContainer>();
+            builder.Services.AddSingleton<IWebSocketContainer, WebSocketContainer>();
+            builder.Services.AddSingleton<IFileDistributorManager, FileDistributorManager>();
+            builder.Services.AddSingleton<IHostStringRetriever, HostStringRetriever>();
 
-        builder.Services.AddKeyedSingleton<IEventHandler, RequestCheckInEventHandler>(nameof(RequestCheckInEvent));
-        builder.Services.AddKeyedSingleton<IEventHandler, SocketClosedEventHandler>(nameof(SocketClosedEvent));
-        builder.Services.AddKeyedSingleton<IEventHandler, DisconnectSlaveEventHandler>(nameof(DisconnectSlaveEvent));
+            builder.Services.AddSingleton<IEventDispatcher, EventDispatcher>();
+            builder.Services.AddSingleton<IEventHandlerResolver, EventHandlerResolver>();
 
-        var app = builder.Build();
+            builder.Services.AddKeyedSingleton<IEventHandler, RequestCheckInEventHandler>(nameof(RequestCheckInEvent));
+            builder.Services.AddKeyedSingleton<IEventHandler, SocketClosedEventHandler>(nameof(SocketClosedEvent));
+            builder.Services.AddKeyedSingleton<IEventHandler, DisconnectSlaveEventHandler>(nameof(DisconnectSlaveEvent));
 
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseSwagger();
-            app.UseSwaggerUI();
+            var app = builder.Build();
+
+            // Configure the HTTP request pipeline.
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+            //else
+            //{
+            //    app.UseHttpsRedirection();
+            //}
+
+            var webSocketOptions = new WebSocketOptions()
+            {
+                KeepAliveInterval = TimeSpan.FromMinutes(5)
+            };
+
+            app.UseWebSockets(webSocketOptions);
+
+            app.MapControllers();
+
+            var ed = app.Services.GetRequiredService<IEventDispatcher>();
+            app.Lifetime.ApplicationStopping.Register(() => ed.FireEvent(new DisconnectSlaveEvent()));
+
+            app.Run();
         }
-        //else
-        //{
-        //    app.UseHttpsRedirection();
-        //}
-
-        var webSocketOptions = new WebSocketOptions()
-        {
-            KeepAliveInterval = TimeSpan.FromMinutes(5)
-        };
-
-        app.UseWebSockets(webSocketOptions);
-
-        app.MapControllers();
-
-        var ed = app.Services.GetRequiredService<IEventDispatcher>();
-        app.Lifetime.ApplicationStopping.Register(() => ed.FireEvent(new DisconnectSlaveEvent()));
-
-        app.Run();
     }
 }

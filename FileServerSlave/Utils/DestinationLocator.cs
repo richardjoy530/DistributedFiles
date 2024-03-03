@@ -14,31 +14,24 @@
             _defaultDestination = configuration["DistributedFolder"]!;
         }
 
-        public bool SetCustomLocation(string customPath)
+        public void SetCustomLocation(string customPath)
         {
-            if (string.IsNullOrWhiteSpace(_customDestinationFolder))
+            if (!string.IsNullOrWhiteSpace(_customDestinationFolder))
             {
-                if (!Directory.Exists(customPath))
-                {
-                    Directory.CreateDirectory(customPath);
-                }
-
-                _customDestinationFolder = customPath;
-                return true;
+                return;
             }
 
-            return false;
+            if (!Directory.Exists(customPath))
+            {
+                Directory.CreateDirectory(customPath);
+            }
+
+            _customDestinationFolder = customPath;
         }
 
         public string GetDestinationFolderPath()
         {
-
-            if (string.IsNullOrWhiteSpace(_customDestinationFolder))
-            {
-                return _defaultDestination;
-            }
-
-            return _customDestinationFolder;
+            return string.IsNullOrWhiteSpace(_customDestinationFolder) ? _defaultDestination : _customDestinationFolder;
         }
     }
 }

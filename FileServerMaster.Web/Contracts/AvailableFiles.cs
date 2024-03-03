@@ -2,8 +2,8 @@
 {
     public class AvailableFiles
     {
-        public required string[] SlaveHostStrings { get; set; }
+        public required string[] SlaveHostStrings { get; init; }
 
-        public required string[] AvailableFileNames { get; set; }
+        public required string[] AvailableFileNames { get; init; }
     }
 }

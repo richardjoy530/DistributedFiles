@@ -1,7 +1,7 @@
 ﻿
 namespace FileServerSlave.Utils
 {
-    public interface IMasterServerRetriver
+    public interface IMasterServerRetriever
     {
         int RetryInSeconds { get; }
 
@@ -9,6 +9,6 @@ namespace FileServerSlave.Utils
 
         HostString GetMasterHostString();
 
-        bool SetCustomMasterHostString(HostString customHostString);
+        void SetCustomMasterHostString(HostString customHostString);
     }
 }

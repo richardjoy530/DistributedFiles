@@ -1,8 +1,5 @@
-﻿using Common;
-using Common.Proxy.Controllers;
-using FileServerSlave.Utils;
+﻿using FileServerSlave.Utils;
 using Microsoft.AspNetCore.StaticFiles;
-using System.Net.Mime;
 
 namespace FileServerSlave.Files
 {
@@ -30,16 +27,17 @@ namespace FileServerSlave.Files
         public (FileStream? FileStream, string ContentType) GetFile(string filename)
         {
             var filePath = Path.Combine(_distributedFolder, filename);
-            if (File.Exists(filePath))
+            if (!File.Exists(filePath))
             {
-                var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-
-                _ = new FileExtensionContentTypeProvider().TryGetContentType(filePath, out var contentType);
-                
-                return (fs, contentType ?? string.Empty);
+                return (null, string.Empty);
             }
 
-            return (null, string.Empty);
+            var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+
+            _ = new FileExtensionContentTypeProvider().TryGetContentType(filePath, out var contentType);
+                
+            return (fs, contentType ?? string.Empty);
+
         }
 
         public async Task SaveFile(Stream stream, string fileName)
@@ -53,7 +51,7 @@ namespace FileServerSlave.Files
             await stream.CopyToAsync(fileStream);
             await fileStream.FlushAsync();
             fileStream.Close();
-            fileStream.Dispose();
+            await fileStream.DisposeAsync();
         }
     }
 }

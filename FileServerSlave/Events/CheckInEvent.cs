@@ -2,7 +2,5 @@
 
 namespace FileServerSlave.Events
 {
-    public class CheckInEvent : EventBase
-    {
-    }
+    public class CheckInEvent : EventBase;
 }

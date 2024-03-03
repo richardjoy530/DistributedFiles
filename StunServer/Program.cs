@@ -4,7 +4,7 @@ using Common.Stun;
 
 namespace StunServer
 {
-    internal class Program
+    internal abstract class Program
     {
         private const int PrimaryUdpPort = 6666;
         private const int SecondaryUdpPort = 7777;
@@ -62,7 +62,7 @@ namespace StunServer
                 Logger.Log($"recived message from endpoint: \"{(client_endpoint as IPEndPoint)!.Address}\":\"{(client_endpoint as IPEndPoint)!.Port}\"");
                 var req = StunMessageRequest.Parse(buffer);
 
-                var resp = new StunMessageResponse((client_endpoint as IPEndPoint)!, req.RefrenceId);
+                var resp = new StunMessageResponse((client_endpoint as IPEndPoint)!, req.ReferenceId);
                 Logger.Log($"sending message to client endpoint: \"{(client_endpoint as IPEndPoint)!.Address}\":\"{(client_endpoint as IPEndPoint)!.Port}\"");
                 client.Send(resp.GetBytes());
                 client.Shutdown(SocketShutdown.Both);
@@ -95,65 +95,65 @@ namespace StunServer
 
                 // listening for a StunMessageRequest. this can come from a stun client or anoter remote stun server.
                 sock.ReceiveFrom(new ArraySegment<byte>(buffer), ref client_endpoint);
-                Logger.Log($"recived message from endpoint: \"{(client_endpoint as IPEndPoint)!.Address}\":\"{(client_endpoint as IPEndPoint)!.Port}\"");
+                Logger.Log($"received message from endpoint: \"{(client_endpoint as IPEndPoint)!.Address}\":\"{(client_endpoint as IPEndPoint)!.Port}\"");
 
                 var msg = StunMessageRequest.Parse(buffer);
 
                 switch (msg.ChangeAddressFlag)
                 {
                     case StunMessageFlags.None:
+                    {
+                        if (msg.ResponseEndpoint != null )
                         {
-                            if (msg.ResponseEndpoint != null )
-                            {
-                                var resp = new StunMessageResponse(msg.ResponseEndpoint, msg.RefrenceId);
-                                var buff = resp.GetBytes();
+                            var resp = new StunMessageResponse(msg.ResponseEndpoint, msg.ReferenceId);
+                            var buff = resp.GetBytes();
 
-                                Logger.Log($"sending message to client endpoint: \"{msg.ResponseEndpoint.Address}\":\"{msg.ResponseEndpoint.Port}\"");
+                            Logger.Log($"sending message to client endpoint: \"{msg.ResponseEndpoint.Address}\":\"{msg.ResponseEndpoint.Port}\"");
 
-                                sock.SendTo(buff, msg.ResponseEndpoint);
-                            }
-                            else
-                            {
-                                var resp = new StunMessageResponse((client_endpoint as IPEndPoint)!, msg.RefrenceId);
-                                var buff = resp.GetBytes();
-
-                                Logger.Log($"sending message to client endpoint: \"{(client_endpoint as IPEndPoint)!.Address}\":\"{(client_endpoint as IPEndPoint)!.Port}\"");
-
-                                sock.SendTo(buff, (client_endpoint as IPEndPoint)!);
-                            }
-
-                            break;
+                            sock.SendTo(buff, msg.ResponseEndpoint);
                         }
+                        else
+                        {
+                            var resp = new StunMessageResponse((client_endpoint as IPEndPoint)!, msg.ReferenceId);
+                            var buff = resp.GetBytes();
+
+                            Logger.Log($"sending message to client endpoint: \"{(client_endpoint as IPEndPoint)!.Address}\":\"{(client_endpoint as IPEndPoint)!.Port}\"");
+
+                            sock.SendTo(buff, (client_endpoint as IPEndPoint)!);
+                        }
+
+                        break;
+                    }
 
                     case StunMessageFlags.ChangeIp:
-                        {
-                            var req = new StunMessageRequest(StunMessageFlags.None, (client_endpoint as IPEndPoint)!, msg.RefrenceId);
-                            var buff = req.GetBytes();
+                    {
+                        var req = new StunMessageRequest(StunMessageFlags.None, (client_endpoint as IPEndPoint)!, msg.ReferenceId);
+                        var buff = req.GetBytes();
 
-                            Logger.Log($"sending message to stun server endpoint: \"{remote_server_ip_endpoint_1.Address}\":\"{remote_server_ip_endpoint_1.Port}\"");
-                            sock.SendTo(buff, remote_server_ip_endpoint_1);
-                            break;
-                        }
+                        Logger.Log($"sending message to stun server endpoint: \"{remote_server_ip_endpoint_1.Address}\":\"{remote_server_ip_endpoint_1.Port}\"");
+                        sock.SendTo(buff, remote_server_ip_endpoint_1);
+                        break;
+                    }
 
                     case StunMessageFlags.ChangePort:
-                        {
-                            var req = new StunMessageRequest(StunMessageFlags.None, (client_endpoint as IPEndPoint)!, msg.RefrenceId);
-                            var buff = req.GetBytes();
+                    {
+                        var req = new StunMessageRequest(StunMessageFlags.None, (client_endpoint as IPEndPoint)!, msg.ReferenceId);
+                        var buff = req.GetBytes();
 
-                            Logger.Log($"sending message to stun server endpoint: \"{server_ip_endpoint_2.Address}\":\"{server_ip_endpoint_2.Port}\"");
-                            sock.SendTo(buff, server_ip_endpoint_2);
-                            break;
-                        }
+                        Logger.Log($"sending message to stun server endpoint: \"{server_ip_endpoint_2.Address}\":\"{server_ip_endpoint_2.Port}\"");
+                        sock.SendTo(buff, server_ip_endpoint_2);
+                        break;
+                    }
 
                     case StunMessageFlags.ChangeBoth:
-                        {
-                            var req = new StunMessageRequest(StunMessageFlags.None, (client_endpoint as IPEndPoint)!, msg.RefrenceId);
-                            var buff = req.GetBytes();
+                    {
+                        var req = new StunMessageRequest(StunMessageFlags.None, (client_endpoint as IPEndPoint)!, msg.ReferenceId);
+                        var buff = req.GetBytes();
 
-                            Logger.Log($"sending message to stun server endpoint: \"{remote_server_ip_endpoint_2.Address}\":\"{remote_server_ip_endpoint_2.Port}\"");
-                            sock.SendTo(buff, remote_server_ip_endpoint_2);
-                            break;
-                        }
+                        Logger.Log($"sending message to stun server endpoint: \"{remote_server_ip_endpoint_2.Address}\":\"{remote_server_ip_endpoint_2.Port}\"");
+                        sock.SendTo(buff, remote_server_ip_endpoint_2);
+                        break;
+                    }
                 }
             }
         }

@@ -4,100 +4,99 @@ using FileServerSlave.Events;
 using FileServerSlave.Utils;
 using System.Net.WebSockets;
 
-namespace FileServerSlave;
-
-public class SocketManager : ISocketManager
+namespace FileServerSlave
 {
-    private readonly ILogger<SocketManager> _logger;
-    private readonly IEventDispatcher _eventDispatcher;
-    private readonly IHostStringRetriver _hostStringRetriver;
-    private readonly IMasterServerRetriver _masterServerRetriver;
-    private readonly HostString _hostString;
-    private readonly bool _secure;
-    private readonly int _retryInSeconds;
-
-    public SocketManager(ILogger<SocketManager> logger,
-                         IEventDispatcher eventQueueManager,
-                         IHostStringRetriver slaveHostStringRetriver,
-                         IMasterServerRetriver masterServerRetriver)
+    public class SocketManager : ISocketManager
     {
+        private readonly ILogger<SocketManager> _logger;
+        private readonly IEventDispatcher _eventDispatcher;
+        private readonly IHostStringRetriever _hostStringRetriever;
+        private readonly HostString _hostString;
+        private readonly bool _secure;
+        private readonly int _retryInSeconds;
 
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _eventDispatcher = eventQueueManager ?? throw new ArgumentNullException(nameof(eventQueueManager));
-        _hostStringRetriver = slaveHostStringRetriver ?? throw new ArgumentNullException(nameof(slaveHostStringRetriver));
-        _masterServerRetriver = masterServerRetriver ?? throw new ArgumentNullException(nameof(masterServerRetriver));
-
-        _retryInSeconds = _masterServerRetriver.RetryInSeconds;
-        _secure = _masterServerRetriver.Secure;
-        _hostString = _masterServerRetriver.GetMasterHostString();
-
-        _logger.LogDebug("configured master host address is \"{host}\"", _hostString);
-    }
-
-    public async void EstablishConnection(CancellationToken ct)
-    {
-        _logger.LogInformation("[Connection] starting socket listener");
-        while (!ct.IsCancellationRequested)
+        public SocketManager(ILogger<SocketManager> logger,
+            IEventDispatcher eventQueueManager,
+            IHostStringRetriever slaveHostStringRetriever,
+            IMasterServerRetriever masterServerRetriever)
         {
-            await Listen(ct);
-            _logger.LogInformation("[Connection] trying to reconnect after \"{}\" seconds", _retryInSeconds);
-            await Task.Delay(1000 * _retryInSeconds);
+            ArgumentNullException.ThrowIfNull(masterServerRetriever);
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _eventDispatcher = eventQueueManager ?? throw new ArgumentNullException(nameof(eventQueueManager));
+            _hostStringRetriever = slaveHostStringRetriever ?? throw new ArgumentNullException(nameof(slaveHostStringRetriever));
+
+            _retryInSeconds = masterServerRetriever.RetryInSeconds;
+            _secure = masterServerRetriever.Secure;
+            _hostString = masterServerRetriever.GetMasterHostString();
+
+            _logger.LogDebug("configured master host address is \"{host}\"", _hostString);
         }
-    }
 
-    private async Task Listen(CancellationToken ct)
-    {
-        ClientWebSocket? ws = null;
-        try
+        public async void EstablishConnection(CancellationToken ct)
         {
-            var hoststrings = string.Join(';', _hostStringRetriver.GetLocalFileServerHosts());
-            ws = new ClientWebSocket();
-
-            var wsscheme = _secure ? "wss" : "ws";
-            var wsuri = new Uri($"{wsscheme}://{_hostString}/ws");
-
-            _logger.LogInformation("[Connection] trying to connect \"{wsuri}\"", wsuri);
-            await ws.ConnectAsync(wsuri, ct);
-            _logger.LogInformation("[Connection] connection established to \"{wsuri}\"", wsuri);
-
-            await ws.WriteAsync("ping", ct);
-            await ws.WriteAsync($"slave server hosted at: \"{hoststrings}\"", ct);
-
-            var (ReciveResult, Message) = await ws.ReadAsync(ct);
-            while (!ReciveResult.CloseStatus.HasValue)
+            _logger.LogInformation("[Connection] starting socket listener");
+            while (!ct.IsCancellationRequested)
             {
-                _logger.LogInformation("[Message] received message: \"{Message}\"", Message);
-                HandleMessage(Message);
-
-                if (ReciveResult.MessageType == WebSocketMessageType.Close)
-                {
-                    _logger.LogInformation("[Connection] closing connection (remote server initiated close message)");
-                    await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, ReciveResult.CloseStatusDescription, ct);
-                    break;
-                }
-                (ReciveResult, Message) = await ws.ReadAsync(ct); // what happens if this crashes?.
+                await Listen(ct);
+                _logger.LogInformation("[Connection] trying to reconnect after \"{}\" seconds", _retryInSeconds);
+                await Task.Delay(1000 * _retryInSeconds, ct);
             }
+        }
 
-            await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "closing connection (remote server initiated close message)", ct);
-        }
-        catch (Exception ex)
+        private async Task Listen(CancellationToken ct)
         {
-            _logger.LogError(ex.Message);
-            _logger.LogTrace(new EventId(1), ex, ex.Message);
-        }
-        finally
-        {
-            ws?.Dispose();
-            _logger.LogInformation("[Connection] disposed connection");
-        }
-    }
+            ClientWebSocket? ws = null;
+            try
+            {
+                var hostStrings = string.Join(';', _hostStringRetriever.GetLocalFileServerHosts());
+                ws = new ClientWebSocket();
 
-    private void HandleMessage(string message)
-    {
-        if (message.Contains("checkin") || message.Contains("pong"))
+                var wssScheme = _secure ? "wss" : "ws";
+                var wsUri = new Uri($"{wssScheme}://{_hostString}/ws");
+
+                _logger.LogInformation("[Connection] trying to connect \"{wsUri}\"", wsUri);
+                await ws.ConnectAsync(wsUri, ct);
+                _logger.LogInformation("[Connection] connection established to \"{wsUri}\"", wsUri);
+
+                await ws.WriteAsync("ping", ct);
+                await ws.WriteAsync($"slave server hosted at: \"{hostStrings}\"", ct);
+
+                var (receiveResult, message) = await ws.ReadAsync(ct);
+                while (!receiveResult.CloseStatus.HasValue)
+                {
+                    _logger.LogInformation("[Message] received message: \"{message}\"", message);
+                    HandleMessage(message);
+
+                    if (receiveResult.MessageType == WebSocketMessageType.Close)
+                    {
+                        _logger.LogInformation("[Connection] closing connection (remote server initiated close message)");
+                        await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, receiveResult.CloseStatusDescription, ct);
+                        break;
+                    }
+                    (receiveResult, message) = await ws.ReadAsync(ct); // what happens if this crashes?.
+                }
+
+                await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "closing connection (remote server initiated close message)", ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                _logger.LogTrace(new EventId(1), ex, ex.Message);
+            }
+            finally
+            {
+                ws?.Dispose();
+                _logger.LogInformation("[Connection] disposed connection");
+            }
+        }
+
+        private void HandleMessage(string message)
         {
-            var checkinEvent = new CheckInEvent();
-            _eventDispatcher.FireEvent(checkinEvent);
+            if (message.Contains("checkin") || message.Contains("pong"))
+            {
+                var checkinEvent = new CheckInEvent();
+                _eventDispatcher.FireEvent(checkinEvent);
+            }
         }
     }
 }

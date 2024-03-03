@@ -4,9 +4,9 @@ using System.Net.Sockets;
 
 namespace StunClient
 {
-    internal class Program
+    internal abstract class Program
     {
-        static void Main(string[] args)
+        public static void Main()
         {
             //Logger.Log("--tcp--");
             //await TestTcpHolePunching();
@@ -16,7 +16,7 @@ namespace StunClient
 
         private static async Task TestTcpHolePunching()
         {
-            var client_ip = Dns.GetHostEntry(Dns.GetHostName()).AddressList[1];
+            var client_ip = (await Dns.GetHostEntryAsync(Dns.GetHostName())).AddressList[1];
             var client_ip_endpoint = new IPEndPoint(client_ip, 7000);
 
             //EndPoint server_ip_endpoint_11 = new IPEndPoint(IPAddress.Parse("192.168.18.87"), 8888);
@@ -83,7 +83,7 @@ namespace StunClient
 
             var buffer = new byte[1024];
             sock.ReceiveFrom(new ArraySegment<byte>(buffer), ref server_ip_endpoint);
-            //Logger.Log($"recived message from endpoint: \"{(server_ip_endpoint as IPEndPoint)!.Address}\":\"{(server_ip_endpoint as IPEndPoint)!.Port}\"");
+            //Logger.Log($"received message from endpoint: \"{(server_ip_endpoint as IPEndPoint)!.Address}\":\"{(server_ip_endpoint as IPEndPoint)!.Port}\"");
             _ = StunMessageResponse.Parse(buffer);
         }
     }

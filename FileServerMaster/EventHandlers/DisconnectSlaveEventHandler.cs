@@ -13,9 +13,9 @@ namespace FileServerMaster.EventHandlers
 
         public DisconnectSlaveEventHandler(ILogger<RequestCheckInEventHandler> logger, IEventDispatcher eventDispatcher, IWebSocketContainer webSocketContainer)
         {
-            _logger = logger;
-            _eventDispatcher = eventDispatcher;
-            _webSocketContainer = webSocketContainer;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _eventDispatcher = eventDispatcher ?? throw new ArgumentNullException(nameof(eventDispatcher));
+            _webSocketContainer = webSocketContainer ?? throw new ArgumentNullException(nameof(webSocketContainer));
         }
 
         public void HandleEvent(EventBase e)

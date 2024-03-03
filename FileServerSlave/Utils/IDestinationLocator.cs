@@ -4,6 +4,6 @@
     {
         string GetDestinationFolderPath();
 
-        bool SetCustomLocation(string customPath);
+        void SetCustomLocation(string customPath);
     }
 }

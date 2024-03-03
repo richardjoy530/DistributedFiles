@@ -4,7 +4,7 @@
     {
         public static void Log(string message)
         {
-            Console.WriteLine($"[thread_id: {Thread.CurrentThread.ManagedThreadId}] {message}");
+            Console.WriteLine($"[thread_id: {Environment.CurrentManagedThreadId}] {message}");
         }
     }
 }

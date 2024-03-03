@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
 namespace Common.Events
-
 {
     public class EventHandlerResolver : IEventHandlerResolver
     {
@@ -13,8 +12,8 @@ namespace Common.Events
 
         public EventHandlerResolver(ILogger<EventHandlerResolver> logger, IServiceProvider serviceProvider)
         {
-            _logger = logger;
-            _serviceProvider = serviceProvider;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
             _eventHandlerMap = new ConcurrentDictionary<string, IEventHandler>();
         }
 

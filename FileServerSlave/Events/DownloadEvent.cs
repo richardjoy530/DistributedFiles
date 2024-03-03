@@ -7,10 +7,10 @@ namespace FileServerSlave.Events
         public readonly HostString HostString;
         public readonly string FileName;
 
-        public DownloadEvent(KeyValuePair<string, string> filelink)
+        public DownloadEvent(KeyValuePair<string, string> fileLink)
         {
-            FileName = filelink.Key;
-            HostString = new HostString(filelink.Value);
+            FileName = fileLink.Key;
+            HostString = new HostString(fileLink.Value);
         }
     }
 }

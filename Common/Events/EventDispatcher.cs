@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
 namespace Common.Events
-
 {
     public class EventDispatcher : IEventDispatcher
     {

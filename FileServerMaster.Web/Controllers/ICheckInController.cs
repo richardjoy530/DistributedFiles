@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FileServerMaster.Web.Controllers
 {
-
     public interface ICheckInController
     {
         [HttpPost]

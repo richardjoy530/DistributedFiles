@@ -6,12 +6,12 @@ namespace Common.Stun
     {
         public readonly IPEndPoint ClientReflexiveEndpoint;
 
-        public readonly Guid RefrenceId;
+        public readonly Guid ReferenceId;
 
-        public StunMessageResponse(IPEndPoint reflexiveAddress, Guid refrenceId)
+        public StunMessageResponse(IPEndPoint reflexiveAddress, Guid referenceId)
         {
             ClientReflexiveEndpoint = reflexiveAddress;
-            RefrenceId = refrenceId;
+            ReferenceId = referenceId;
         }
 
         public static StunMessageResponse Parse(byte[] bytes) 
@@ -20,9 +20,9 @@ namespace Common.Stun
             //Logger.Log($"id: \"{guid}\"");
 
             var port = BitConverter.ToInt32(bytes.AsSpan(4, 4));
-            var ip_len = BitConverter.ToInt32(bytes.AsSpan(0, 4));
+            var ipLen = BitConverter.ToInt32(bytes.AsSpan(0, 4));
 
-            var ipaddr = new IPAddress(bytes.AsSpan(24, ip_len));
+            var ipaddr = new IPAddress(bytes.AsSpan(24, ipLen));
             var endpoint = new IPEndPoint(ipaddr, port);
             Logger.Log($"response_endpoint: \"{ipaddr}\":\"{port}\"");
 
@@ -33,14 +33,14 @@ namespace Common.Stun
         {
             var bytes = new byte[1024];
 
-            ClientReflexiveEndpoint.Address.TryWriteBytes(bytes.AsSpan(24), out var ip_len);
+            ClientReflexiveEndpoint.Address.TryWriteBytes(bytes.AsSpan(24), out var ipLen);
 
-            BitConverter.GetBytes(ip_len).CopyTo(bytes, 0);
-            RefrenceId.ToByteArray().CopyTo(bytes.AsSpan(8, 16));
+            BitConverter.GetBytes(ipLen).CopyTo(bytes, 0);
+            ReferenceId.ToByteArray().CopyTo(bytes.AsSpan(8, 16));
             BitConverter.GetBytes(ClientReflexiveEndpoint.Port).CopyTo(bytes, 4);
 
-            var resp_len = 4 + 4 + 16 + ip_len;
-            return bytes.AsSpan(0, resp_len).ToArray();
+            var respLen = 4 + 4 + 16 + ipLen;
+            return bytes.AsSpan(0, respLen).ToArray();
         }
     }
 }

@@ -1,6 +1,4 @@
 ﻿namespace Common.Events
 {
-    public abstract class EventBase
-    {
-    }
+    public abstract class EventBase;
 }

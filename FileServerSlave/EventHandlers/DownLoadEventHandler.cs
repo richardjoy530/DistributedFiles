@@ -13,16 +13,16 @@ namespace FileServerSlave.EventHandlers
         private readonly bool _secure;
 
         public DownLoadEventHandler(ILogger<DownLoadEventHandler> logger,
-                                    IEventDispatcher eventDispatcher,
-                                    IMasterServerRetriver masterServerRetriver,
-                                    IFileManager fileManager)
+            IEventDispatcher eventDispatcher,
+            IMasterServerRetriever masterServerRetriever,
+            IFileManager fileManager)
         {
-            ArgumentNullException.ThrowIfNull(masterServerRetriver);
+            ArgumentNullException.ThrowIfNull(masterServerRetriever);
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _eventDispatcher = eventDispatcher ?? throw new ArgumentNullException(nameof(eventDispatcher));
             _fileManager = fileManager ?? throw new ArgumentNullException(nameof(fileManager));
 
-            _secure = masterServerRetriver.Secure;
+            _secure = masterServerRetriever.Secure;
         }
 
         public void HandleEvent(EventBase e)
@@ -33,7 +33,7 @@ namespace FileServerSlave.EventHandlers
                 return;
             }
 
-            _logger.LogInformation("[DownloadEvent] host for \"{filename}\" is \"{hoststring}\"", de.FileName, de.HostString);
+            _logger.LogInformation("[DownloadEvent] host for \"{filename}\" is \"{hostString}\"", de.FileName, de.HostString);
             if (string.IsNullOrWhiteSpace(de.HostString.ToString()))
             {
                 _logger.LogError("download host is invalid");
@@ -58,7 +58,7 @@ namespace FileServerSlave.EventHandlers
                     await _fileManager.SaveFile(stream!, de.FileName);
 
                     stream.Close();
-                    stream.Dispose();
+                    await stream.DisposeAsync();
                     client.Dispose();
 
                     var ce = new CheckInEvent();

@@ -13,23 +13,23 @@ namespace FileServerSlave.EventHandlers
         private readonly ILogger<CheckInEventHandler> _logger;
         private readonly IEventDispatcher _eventDispatcher;
         private readonly ICheckInController _checkInController;
-        private readonly IHostStringRetriver _hostStringRetriver;
+        private readonly IHostStringRetriever _hostStringRetriever;
         private readonly IFileManager _fileManager;
 
         public CheckInEventHandler(ILogger<CheckInEventHandler> logger,
-                                   IEventDispatcher eventDispatcher,
-                                   IHostStringRetriver slaveHostStringRetriver,
-                                   IFileManager fileManager,
-                                   IMasterServerRetriver masterServerRetriver)
+            IEventDispatcher eventDispatcher,
+            IHostStringRetriever slaveHostStringRetriever,
+            IFileManager fileManager,
+            IMasterServerRetriever masterServerRetriever)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _eventDispatcher = eventDispatcher ?? throw new ArgumentNullException(nameof(eventDispatcher));
-            _hostStringRetriver = slaveHostStringRetriver ?? throw new ArgumentNullException(nameof(slaveHostStringRetriver));
+            _hostStringRetriever = slaveHostStringRetriever ?? throw new ArgumentNullException(nameof(slaveHostStringRetriever));
             _fileManager = fileManager ?? throw new ArgumentNullException(nameof(fileManager));
-            ArgumentNullException.ThrowIfNull(nameof(masterServerRetriver));
+            ArgumentNullException.ThrowIfNull(nameof(masterServerRetriever));
             
-            var secure = masterServerRetriver.Secure;
-            var masterHostString = masterServerRetriver.GetMasterHostString();
+            var secure = masterServerRetriever.Secure;
+            var masterHostString = masterServerRetriever.GetMasterHostString();
 
             _logger.LogDebug("configured master host address is \"{host}\"", masterHostString);
             _checkInController = ApiInterceptor.GetController<ICheckInController>(masterHostString, secure);
@@ -46,7 +46,7 @@ namespace FileServerSlave.EventHandlers
             var req = new FileServerMaster.Web.Contracts.AvailableFiles
             {
                 AvailableFileNames = _fileManager.GetAvailableFilesOnThisServer(),
-                SlaveHostStrings = _hostStringRetriver.GetLocalFileServerHosts().Select(h => h.ToString()).ToArray()
+                SlaveHostStrings = _hostStringRetriever.GetLocalFileServerHosts().Select(h => h.ToString()).ToArray()
             };
 
             // api call to master server
@@ -54,7 +54,7 @@ namespace FileServerSlave.EventHandlers
 
             if (resp.FileLinks.Count == 0)
             {
-                _logger.LogInformation("[CheckIn] no files to retrive");
+                _logger.LogInformation("[CheckIn] no files to retrieve");
                 return;
             }
 

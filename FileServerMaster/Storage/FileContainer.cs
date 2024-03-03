@@ -1,5 +1,4 @@
-﻿using Common.Proxy.Controllers;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 
 namespace FileServerMaster.Storage
 {
@@ -18,19 +17,14 @@ namespace FileServerMaster.Storage
 
         public async Task<bool> AddFileAsync(Stream stream, string fileName, string contentType)
         {
-            var temp_file_name = Path.GetTempFileName();
-            if (temp_file_name == null)
-            {
-                _logger.LogWarning("unable to create temp file");
-                return false;
-            }
+            var tempFileName = Path.GetTempFileName();
 
-            var fs = new FileStream(temp_file_name, FileMode.Open);
+            var fs = new FileStream(tempFileName, FileMode.Open);
             await stream.CopyToAsync(fs);
             fs.Close();
             await fs.DisposeAsync();
 
-            _tempFiles.TryAdd(fileName, (temp_file_name, contentType));
+            _tempFiles.TryAdd(fileName, (tempFileName, contentType));
             return true;
         }
 
@@ -38,7 +32,7 @@ namespace FileServerMaster.Storage
         {
             if(_tempFiles.TryGetValue(fileName, out var tempFile))
             {
-                var fs = new FileStream(tempFile.Path!, FileMode.Open, FileAccess.Read);
+                var fs = new FileStream(tempFile.Path, FileMode.Open, FileAccess.Read);
                 return (fs, tempFile.ContentType);
             }
 
@@ -57,11 +51,6 @@ namespace FileServerMaster.Storage
                 _logger.LogInformation("[FileContainer] removing \"{}\"", fileName);
                 _tempFiles.Remove(fileName, out _);
             }
-        }
-
-        public IEnumerable<string> GetTempFileNames()
-        {
-            return _tempFiles.Keys;
         }
     }
 }
