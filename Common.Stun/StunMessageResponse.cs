@@ -17,7 +17,7 @@ namespace Common.Stun
         public static StunMessageResponse Parse(byte[] bytes) 
         {
             var guid = new Guid(bytes.AsSpan(8, 16));
-            Logger.Log($"id: \"{guid}\"");
+            //Logger.Log($"id: \"{guid}\"");
 
             var port = BitConverter.ToInt32(bytes.AsSpan(4, 4));
             var ip_len = BitConverter.ToInt32(bytes.AsSpan(0, 4));

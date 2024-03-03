@@ -22,7 +22,7 @@ namespace StunServer
 
             Logger.Log($"stun server running on: \"{server_ip}\"");
             var remote_server_ip = IPAddress.Parse(args[0]);
-            Logger.Log($"remote stun server on: \"{server_ip}\"");
+            Logger.Log($"remote stun server on: \"{remote_server_ip}\"");
 
             var primary_udp_server = new Thread(() => RunUdpTraversal(true, server_ip, remote_server_ip));
             var secondary_udp_server = new Thread(() => RunUdpTraversal(false, server_ip, remote_server_ip));
@@ -32,11 +32,42 @@ namespace StunServer
 
             primary_udp_server.Start();
             secondary_udp_server.Start();
+
+            primary_tcp_server.Start();
+            secondary_tcp_server.Start();
         }
 
         private static void RunTcpTraversal(bool is_primary, IPAddress server_ip, IPAddress remote_server_ip)
         {
+            // endpoint that host's stun server on this process
+            var server_ip_endpoint_1 = new IPEndPoint(server_ip, is_primary ? PrimaryTcpPort : SecondaryTcpPort);
+            var server_ip_endpoint_2 = new IPEndPoint(server_ip, is_primary ? SecondaryTcpPort : PrimaryTcpPort);
 
+            // stun protocal needs 2 servers with different ips, these are the remote stun server
+            var remote_server_ip_endpoint_1 = new IPEndPoint(remote_server_ip, is_primary ? PrimaryTcpPort : SecondaryTcpPort);
+            var remote_server_ip_endpoint_2 = new IPEndPoint(remote_server_ip, is_primary ? SecondaryTcpPort : PrimaryTcpPort);
+
+            // creating a TCP socket
+            var sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            sock.Bind(server_ip_endpoint_1);
+
+            sock.Listen(1); // for now only one connection can be accepted.
+            while (true)
+            {
+                var client = sock.Accept();
+                var client_endpoint = client.RemoteEndPoint;
+
+                var buffer = new byte[1024];
+                client.Receive(buffer);
+                Logger.Log($"recived message from endpoint: \"{(client_endpoint as IPEndPoint)!.Address}\":\"{(client_endpoint as IPEndPoint)!.Port}\"");
+                var req = StunMessageRequest.Parse(buffer);
+
+                var resp = new StunMessageResponse((client_endpoint as IPEndPoint)!, req.RefrenceId);
+                Logger.Log($"sending message to client endpoint: \"{(client_endpoint as IPEndPoint)!.Address}\":\"{(client_endpoint as IPEndPoint)!.Port}\"");
+                client.Send(resp.GetBytes());
+                client.Shutdown(SocketShutdown.Both);
+                client.Close();
+            }
         }
 
         private static void RunUdpTraversal(bool is_primary, IPAddress server_ip, IPAddress remote_server_ip)
