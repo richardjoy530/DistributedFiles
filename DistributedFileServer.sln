@@ -17,6 +17,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StunClient", "StunClient\St
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Stun", "Common.Stun\Common.Stun.csproj", "{48A76EC2-F4E4-4FF8-944C-0A5DB3398242}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RelayServer", "RelayServer\RelayServer.vcxproj", "{E1CEFC19-EAD1-4AED-AFFD-08867B75D106}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{48A76EC2-F4E4-4FF8-944C-0A5DB3398242}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{48A76EC2-F4E4-4FF8-944C-0A5DB3398242}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{48A76EC2-F4E4-4FF8-944C-0A5DB3398242}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E1CEFC19-EAD1-4AED-AFFD-08867B75D106}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{E1CEFC19-EAD1-4AED-AFFD-08867B75D106}.Debug|Any CPU.Build.0 = Debug|Win32
+		{E1CEFC19-EAD1-4AED-AFFD-08867B75D106}.Release|Any CPU.ActiveCfg = Release|Win32
+		{E1CEFC19-EAD1-4AED-AFFD-08867B75D106}.Release|Any CPU.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
